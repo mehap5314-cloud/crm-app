@@ -1,0 +1,21 @@
+{
+  "name": "crm-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14",
+    "react": "^18",
+    "react-dom": "^18",
+    "next-auth": "^4",
+    "googleapis": "^latest",
+    "tailwindcss": "^3",
+    "postcss": "^latest",
+    "autoprefixer": "^latest",
+    "lucide-react": "^latest"
+  }
+}
