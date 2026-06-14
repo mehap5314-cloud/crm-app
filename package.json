@@ -12,10 +12,10 @@
     "react": "^18",
     "react-dom": "^18",
     "next-auth": "^4",
-    "googleapis": "^latest",
+    "googleapis": "^173.0.0",
     "tailwindcss": "^3",
-    "postcss": "^latest",
-    "autoprefixer": "^latest",
-    "lucide-react": "^latest"
+    "postcss": "^8.5.15",
+    "autoprefixer": "^10.5.0",
+    "lucide-react": "^1.18.0"
   }
 }
