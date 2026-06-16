@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
 import { getIssueById, updateIssue, deleteIssue } from '@/lib/googleSheets'
+import { invalidateCache } from '@/lib/cache'
 import { NextResponse } from 'next/server'
 
 export async function GET(req, { params }) {
@@ -23,6 +24,7 @@ export async function PUT(req, { params }) {
   try {
     const data = await req.json()
     await updateIssue(params.id, data)
+    invalidateCache()
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
@@ -40,6 +42,7 @@ export async function DELETE(req, { params }) {
 
   try {
     await deleteIssue(params.id)
+    invalidateCache()
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

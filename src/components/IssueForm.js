@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageUpload from './ImageUpload'
 import { Save, ArrowLeft, FilePlus, AlertTriangle } from 'lucide-react'
@@ -47,11 +47,13 @@ const FIELDS = [
   { key: 'Contact Number', label: 'Contact Number', type: 'text' },
   { key: 'Description', label: 'Description', type: 'textarea' },
   { key: 'Final Conclusion', label: 'Final Conclusion', type: 'textarea' },
-  { key: 'Status', label: 'Status', type: 'select', options: ['Open', 'In Progress', 'Pending', 'Closed', 'Cancelled'] },
+  { key: 'Status', label: 'Status', type: 'select', options: ['Pending', 'Pending 48H', 'Closed', 'Escalated'] },
   { key: 'Handled by', label: 'Handled By', type: 'select', options: HANDLED_BY },
   { key: 'Issue code', label: 'Issue Code', type: 'select', options: ISSUE_CODES },
   { key: 'Exception', label: 'Exception', type: 'text' },
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
+  { key: 'Ticket', label: 'Ticket', type: 'text' },
+  { key: 'Duplicate', label: 'Duplicate', type: 'text' },
   { key: 'Follow up', label: 'Follow Up', type: 'textarea' },
   { key: 'Note', label: 'Note', type: 'textarea' },
 ]
@@ -70,34 +72,29 @@ export default function IssueForm({ initialData }) {
   })
 
   const isEdit = !!initialData
+  const issuesCache = useRef(null)
 
-  const checkDuplicates = useCallback(async (name, phone) => {
-    if (!name && !phone) { setDuplicates([]); return }
-    setCheckingDuplicate(true)
+  const checkDuplicates = useCallback(async (phone) => {
+    if (!phone || phone.length < 3) { setDuplicates([]); return }
     try {
-      const res = await fetch('/api/sheets')
-      if (res.ok) {
-        const issues = await res.json()
-        const openStatuses = ['Open', 'In Progress', 'Pending']
-        const matches = issues.filter(i => {
-          if (isEdit && i.id === initialData.id) return false
-          if (!openStatuses.includes(i['Status'])) return false
-          const nameMatch = name && i['Customer Name']?.toLowerCase().includes(name.toLowerCase())
-          const phoneMatch = phone && i['Contact Number']?.includes(phone)
-          return nameMatch || phoneMatch
-        })
-        setDuplicates(matches)
+      if (!issuesCache.current) {
+        const res = await fetch('/api/sheets')
+        if (res.ok) issuesCache.current = await res.json()
       }
+      const matches = (issuesCache.current || []).filter(i => {
+        if (isEdit && i.id === initialData.id) return false
+        return i['Contact Number']?.includes(phone)
+      })
+      setDuplicates(matches)
     } catch {}
-    setCheckingDuplicate(false)
   }, [isEdit, initialData?.id])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      checkDuplicates(form['Customer Name'], form['Contact Number'])
+      checkDuplicates(form['Contact Number'])
     }, 500)
     return () => clearTimeout(timer)
-  }, [form['Customer Name'], form['Contact Number'], checkDuplicates])
+  }, [form['Contact Number'], checkDuplicates])
 
   function handleChange(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -149,17 +146,33 @@ export default function IssueForm({ initialData }) {
       )}
 
       {duplicates.length > 0 && (
-        <div className="flex items-start gap-3 px-5 py-4 rounded-xl mb-6 animate-slide-up" style={{background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)'}}>
-          <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <span className="text-sm font-medium text-amber-300">Possible duplicate{duplicates.length > 1 ? 's' : ''} found</span>
-            <div className="mt-1.5 space-y-1">
-              {duplicates.map(d => (
-                <div key={d.id} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  #{d.id} &middot; {d['Customer Name']} &middot; {d['Contact Number']} &middot; <span className="text-amber-400">{d['Status']}</span> &middot; {d['Start Call']}
-                </div>
-              ))}
-            </div>
+        <div className="rounded-xl mb-6 animate-slide-up overflow-hidden" style={{border: '1px solid rgba(245,158,11,0.25)'}}>
+          <div className="flex items-center gap-2 px-5 py-3" style={{background: 'rgba(245,158,11,0.1)'}}>
+            <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+            <span className="text-sm font-medium text-amber-300">{duplicates.length} previous issue{duplicates.length > 1 ? 's' : ''} for this number</span>
+          </div>
+          <div className="divide-y" style={{borderColor: 'rgba(245,158,11,0.1)'}}>
+            {duplicates.map(d => (
+              <div
+                key={d.id}
+                onClick={() => router.push(`/dashboard/${d.id}`)}
+                className="flex items-center gap-4 px-5 py-2.5 text-xs cursor-pointer transition-all"
+                style={{color: 'var(--text-secondary)', background: 'var(--bg-card)'}}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
+              >
+                <span className={d['Status'] === 'Closed' ? 'line-through opacity-60' : ''}>{d['Customer Name']}</span>
+                <span className="font-mono">{d['Issue code']}</span>
+                <span className={'px-1.5 py-0.5 rounded text-xs font-medium'} style={
+                  d['Status'] === 'Closed' ? {background: 'rgba(16,185,129,0.12)', color: '#34d399'} :
+                  d['Status'] === 'Pending' ? {background: 'rgba(249,115,22,0.12)', color: '#fb923c'} :
+                  d['Status'] === 'Pending 48H' ? {background: 'rgba(245,158,11,0.12)', color: '#fbbf24'} :
+                  d['Status'] === 'Escalated' ? {background: 'rgba(239,68,68,0.12)', color: '#f87171'} :
+                  {}
+                }>{d['Status']}</span>
+                <span className="ml-auto text-xs opacity-50">{d['Start Call']}{d['_sheet'] === 'old' ? ' (old)' : ''}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -195,8 +208,13 @@ export default function IssueForm({ initialData }) {
                 type={field.type}
                 value={form[field.key] || ''}
                 onChange={(e) => handleChange(field.key, e.target.value)}
+                readOnly={field.key === 'Ticket'}
                 className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
-                style={{background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)'}}
+                style={{
+                  background: field.key === 'Ticket' ? 'rgba(245,158,11,0.05)' : 'var(--bg-secondary)',
+                  borderColor: field.key === 'Ticket' ? 'rgba(245,158,11,0.15)' : 'var(--border-color)',
+                  color: 'var(--text-primary)',
+                }}
               />
             )}
           </div>

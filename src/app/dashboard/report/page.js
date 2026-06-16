@@ -5,18 +5,12 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
-import { Printer, Download, AlertCircle, HeadphonesIcon } from 'lucide-react'
+import { Printer, Download, FileText, RefreshCw } from 'lucide-react'
 
-const STATUS_STYLES = {
-  'Open': { bg: 'rgba(245,158,11,0.12)', text: '#fbbf24' },
-  'In Progress': { bg: 'rgba(59,130,246,0.12)', text: '#60a5fa' },
-  'Closed': { bg: 'rgba(16,185,129,0.12)', text: '#34d399' },
-  'Pending': { bg: 'rgba(249,115,22,0.12)', text: '#fb923c' },
-  'Cancelled': { bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
-}
+const HANDLERS = ['Seif', 'Ayman', 'M.Saaed', 'Younis', 'Sohila', 'Amany', 'Manar', 'Karema']
 
 export default function Report() {
-  const { data: session, status } = useSession()
+  const { data: session, status: authStatus } = useSession()
   const router = useRouter()
   const [issues, setIssues] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,131 +18,221 @@ export default function Report() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/')
-    if (status !== 'authenticated') return
+    if (authStatus === 'unauthenticated') router.push('/')
+    if (authStatus !== 'authenticated') return
     fetch('/api/sheets').then(r => r.json()).then(d => { setIssues(Array.isArray(d) ? d : []); setLoading(false) }).catch(() => setLoading(false))
-  }, [status, router])
+  }, [authStatus, router])
 
-  const todayIssues = issues.filter(i => (i['Start Call'] || '').startsWith(date))
-  const total = todayIssues.length
-  const open = todayIssues.filter(i => i['Status'] === 'Open').length
-  const inProgress = todayIssues.filter(i => i['Status'] === 'In Progress').length
-  const closed = todayIssues.filter(i => i['Status'] === 'Closed').length
-  const pending = todayIssues.filter(i => i['Status'] === 'Pending').length
+  const dayIssues = issues.filter(i => (i['Start Call'] || '').startsWith(date))
+  const newCases = dayIssues.filter(i => i._sheet !== 'old')
+  const oldCases = dayIssues.filter(i => i._sheet === 'old')
 
-  const byBranch = {}
-  todayIssues.forEach(i => { const b = i['Branch'] || 'Unknown'; byBranch[b] = (byBranch[b] || 0) + 1 })
-  const branchList = Object.entries(byBranch).sort((a, b) => b[1] - a[1])
+  const newClosed = newCases.filter(i => i['Status'] === 'Closed').length
+  const newPending = newCases.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
+  const oldClosed = oldCases.filter(i => i['Status'] === 'Closed').length
+  const oldPending = oldCases.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
 
-  const byHandledBy = {}
-  todayIssues.forEach(i => { const h = i['Handled by'] || 'Unassigned'; byHandledBy[h] = (byHandledBy[h] || 0) + 1 })
-  const handledByList = Object.entries(byHandledBy).sort((a, b) => b[1] - a[1])
+  const refundCases = dayIssues.filter(i => i['Amount Refund'] && i['Amount Refund'].trim() !== '')
+  const brokenCount = dayIssues.filter(i => i['Issue code'] === 'Broken').length
 
-  if (status === 'loading' || status === 'unauthenticated') return null
+  const followUps = issues.filter(i => i['Follow up'] && i['Follow up'].trim() !== '' && (i['Start Call'] || '').startsWith(date))
+  const followUpClosed = followUps.filter(i => i['Status'] === 'Closed').length
+  const followUpPending = followUps.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
+
+  function handlerCases(list, handler) {
+    return list.filter(i => i['Handled by'] === handler).length
+  }
+
+  function handlerFollowUp(handler, statuses) {
+    return followUps.filter(i => i['Handled by'] === handler && statuses.includes(i['Status'])).length
+  }
+
+  if (authStatus === 'loading' || authStatus === 'unauthenticated') return null
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
       <div style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.03) 0%, transparent 60%)' }}>
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between gap-4 mb-8 animate-fade-in">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20">
-                <HeadphonesIcon size={20} className="text-amber-400" />
+        <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20">
+                <FileText size={18} className="text-amber-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>Daily Report</h1>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{date}</p>
+                <h1 className="text-xl font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>Daily Complaints Report</h1>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{date}</p>
               </div>
             </div>
             <div className="flex gap-2">
               <input type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="px-3 py-2 rounded-xl text-sm"
-                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
               <button onClick={() => window.print()}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all"
                 style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff' }}>
-                <Printer size={15} /> Print
+                <Printer size={14} /> Print
               </button>
             </div>
           </div>
 
           {loading ? (
             <div className="flex justify-center py-24">
-              <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <RefreshCw size={32} className="text-amber-500 animate-spin" />
             </div>
           ) : (
-            <div className="animate-fade-in space-y-6 print:space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                {[
-                  { label: 'Total', value: total, color: '#f59e0b' },
-                  { label: 'Open', value: open, color: '#fbbf24' },
-                  { label: 'In Progress', value: inProgress, color: '#60a5fa' },
-                  { label: 'Closed', value: closed, color: '#34d399' },
-                  { label: 'Pending', value: pending, color: '#fb923c' },
-                ].map((s, i) => (
-                  <div key={i} className="rounded-xl border p-4 text-center" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-                    <div className="text-2xl font-heading font-bold" style={{ color: s.color }}>{s.value}</div>
-                    <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
+            <div className="space-y-5">
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-xl border p-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-                  <h3 className="text-sm font-heading font-bold mb-3" style={{ color: 'var(--text-primary)' }}>By Branch</h3>
-                  <div className="space-y-2">
-                    {branchList.map(([b, c]) => (
-                      <div key={b} className="flex justify-between text-sm">
-                        <span style={{ color: 'var(--text-primary)' }}>{b}</span>
-                        <span className="font-mono" style={{ color: 'var(--text-muted)' }}>{c}</span>
-                      </div>
-                    ))}
-                    {branchList.length === 0 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>No data</span>}
-                  </div>
+              {/* Section 1: Summary Cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl border p-4 text-center" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                  <div className="text-xs font-semibold tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total New Cases</div>
+                  <div className="text-3xl font-heading font-bold" style={{ color: '#fbbf24' }}>{newCases.length}</div>
                 </div>
-                <div className="rounded-xl border p-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-                  <h3 className="text-sm font-heading font-bold mb-3" style={{ color: 'var(--text-primary)' }}>By Handled By</h3>
-                  <div className="space-y-2">
-                    {handledByList.map(([h, c]) => (
-                      <div key={h} className="flex justify-between text-sm">
-                        <span style={{ color: 'var(--text-primary)' }}>{h}</span>
-                        <span className="font-mono" style={{ color: 'var(--text-muted)' }}>{c}</span>
-                      </div>
-                    ))}
-                    {handledByList.length === 0 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>No data</span>}
-                  </div>
+                <div className="rounded-xl border p-4 text-center" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                  <div className="text-xs font-semibold tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Old Cases</div>
+                  <div className="text-3xl font-heading font-bold" style={{ color: '#818cf8' }}>{oldCases.length}</div>
+                </div>
+                <div className="rounded-xl border p-4 text-center" style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', borderColor: 'rgba(245,158,11,0.2)' }}>
+                  <div className="text-xs font-semibold tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Cases</div>
+                  <div className="text-3xl font-heading font-bold" style={{ color: '#f59e0b' }}>{dayIssues.length}</div>
                 </div>
               </div>
 
-              <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-color)' }}>
+              {/* Section 2: Status Breakdown */}
+              <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}></th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold tracking-wider" style={{ color: '#34d399' }}>Closed</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold tracking-wider" style={{ color: '#fb923c' }}>Pending</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                      <td className="px-4 py-2.5 font-medium" style={{ color: 'var(--text-primary)' }}>New</td>
+                      <td className="px-4 py-2.5 text-center"><span className="inline-block px-3 py-1 rounded-lg text-sm font-bold" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399' }}>{newClosed}</span></td>
+                      <td className="px-4 py-2.5 text-center"><span className="inline-block px-3 py-1 rounded-lg text-sm font-bold" style={{ background: 'rgba(249,115,22,0.12)', color: '#fb923c' }}>{newPending}</span></td>
+                    </tr>
+                    <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                      <td className="px-4 py-2.5 font-medium" style={{ color: 'var(--text-primary)' }}>Old</td>
+                      <td className="px-4 py-2.5 text-center"><span className="inline-block px-3 py-1 rounded-lg text-sm font-bold" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399' }}>{oldClosed}</span></td>
+                      <td className="px-4 py-2.5 text-center"><span className="inline-block px-3 py-1 rounded-lg text-sm font-bold" style={{ background: 'rgba(249,115,22,0.12)', color: '#fb923c' }}>{oldPending}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Section 3: Refund Cases */}
+              <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <div className="px-4 py-2.5 text-xs font-semibold tracking-wider" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>Refund Cases</div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Reason</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Amount</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Broken</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {refundCases.length === 0 ? (
+                      <tr><td colSpan={3} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No refund cases</td></tr>
+                    ) : refundCases.map((r, i) => (
+                      <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-4 py-2" style={{ color: 'var(--text-primary)' }}>{r['Issue code'] || '-'}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{r['Amount Refund']}</td>
+                        <td className="px-4 py-2 text-center" style={{ color: 'var(--text-secondary)' }}>{r['Issue code'] === 'Broken' ? '✔' : '-'}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ borderTop: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+                      <td className="px-4 py-2 font-semibold" style={{ color: 'var(--text-primary)' }}>Total</td>
+                      <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{refundCases.reduce((s, r) => s + (parseFloat(r['Amount Refund']) || 0), 0)}</td>
+                      <td className="px-4 py-2 text-center font-semibold" style={{ color: brokenCount > 0 ? '#f87171' : 'var(--text-secondary)' }}>{brokenCount}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Section 4: Handled By */}
+              <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <div className="px-4 py-2.5 text-xs font-semibold tracking-wider" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>HANDLED BY</div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr style={{ background: 'var(--bg-secondary)' }}>
-                        {['Customer Name', 'Contact Number', 'Issue code', 'Status', 'Branch', 'Handled by'].map(col => (
-                          <th key={col} className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{col}</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}></th>
+                        {HANDLERS.map(h => (
+                          <th key={h} className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {todayIssues.length === 0 ? (
-                        <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: 'var(--text-muted)' }}>No issues for this date</td></tr>
-                      ) : todayIssues.map(issue => (
-                        <tr key={issue.id} style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border-color)' }}>
-                          <td className="px-3 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>{issue['Customer Name'] || '-'}</td>
-                          <td className="px-3 py-3" style={{ color: 'var(--text-secondary)' }}>{issue['Contact Number'] || '-'}</td>
-                          <td className="px-3 py-3 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{issue['Issue code'] || '-'}</td>
-                          <td className="px-3 py-3"><span className="inline-block px-2 py-1 rounded-lg text-xs font-medium" style={STATUS_STYLES[issue['Status']] || { bg: 'rgba(100,116,139,0.12)', text: '#94a3b8' }}>{issue['Status'] || 'Open'}</span></td>
-                          <td className="px-3 py-3" style={{ color: 'var(--text-secondary)' }}>{issue['Branch'] || '-'}</td>
-                          <td className="px-3 py-3" style={{ color: 'var(--text-secondary)' }}>{issue['Handled by'] || '-'}</td>
-                        </tr>
-                      ))}
+                      <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#fbbf24' }}>New Cases</td>
+                        {HANDLERS.map(h => {
+                          const v = handlerCases(newCases, h)
+                          return <td key={h} className="px-3 py-2 text-center font-mono font-bold" style={{ color: v > 5 ? '#fbbf24' : 'var(--text-secondary)' }}>{v || '-'}</td>
+                        })}
+                      </tr>
+                      <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#818cf8' }}>Old Cases</td>
+                        {HANDLERS.map(h => {
+                          const v = handlerCases(oldCases, h)
+                          return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: 'var(--text-secondary)' }}>{v || '-'}</td>
+                        })}
+                      </tr>
+                      <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#f87171' }}>Broken Cases</td>
+                        {HANDLERS.map(h => {
+                          const v = dayIssues.filter(i => i['Issue code'] === 'Broken' && i['Handled by'] === h).length
+                          return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: v > 0 ? '#f87171' : 'var(--text-secondary)' }}>{v || '-'}</td>
+                        })}
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
+
+              {/* Section 5: Follow Up Report */}
+              <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <div className="px-4 py-2.5 text-xs font-semibold tracking-wider" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>FOLLOW UP REPORT</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ background: 'var(--bg-secondary)' }}>
+                        <th className="px-3 py-2 text-right text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}></th>
+                        {HANDLERS.map(h => (
+                          <th key={h} className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#34d399' }}>Closed</td>
+                        {HANDLERS.map(h => {
+                          const v = handlerFollowUp(h, ['Closed'])
+                          return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: v > 0 ? '#34d399' : 'var(--text-secondary)' }}>{v || '-'}</td>
+                        })}
+                      </tr>
+                      <tr style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#fb923c' }}>Still Pending</td>
+                        {HANDLERS.map(h => {
+                          const v = handlerFollowUp(h, ['Pending', 'Pending 48H'])
+                          return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: v > 0 ? '#fb923c' : 'var(--text-secondary)' }}>{v || '-'}</td>
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-3 flex items-center gap-6 text-xs" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color)' }}>
+                  <span><span className="font-semibold" style={{ color: '#34d399' }}>Closed</span>: <span className="font-mono text-white">{followUpClosed}</span></span>
+                  <span><span className="font-semibold" style={{ color: '#fb923c' }}>Still Pending</span>: <span className="font-mono text-white">{followUpPending}</span></span>
+                  <span><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Total Follow Up</span>: <span className="font-mono text-white">{followUps.length}</span></span>
+                </div>
+              </div>
+
             </div>
           )}
         </main>

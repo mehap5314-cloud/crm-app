@@ -62,13 +62,12 @@ function BarChartCard({ title, data, color, icon: Icon, maxBars }) {
 }
 
 function StatusDonut({ issues }) {
-  const statuses = ['Open', 'In Progress', 'Closed', 'Pending', 'Cancelled']
+  const statuses = ['Pending', 'Pending 48H', 'Closed', 'Escalated']
   const colors = {
-    'Open': { bg: '#fbbf24', ring: '#f59e0b' },
-    'In Progress': { bg: '#60a5fa', ring: '#3b82f6' },
     'Closed': { bg: '#34d399', ring: '#10b981' },
     'Pending': { bg: '#fb923c', ring: '#f97316' },
-    'Cancelled': { bg: '#f87171', ring: '#ef4444' },
+    'Pending 48H': { bg: '#fbbf24', ring: '#f59e0b' },
+    'Escalated': { bg: '#f87171', ring: '#ef4444' },
   }
   const counts = {}
   statuses.forEach(s => counts[s] = 0)
@@ -191,8 +190,9 @@ export default function Analytics() {
   }
 
   const total = issues.length
-  const open = issues.filter(i => i['Status'] === 'Open').length
-  const inProgress = issues.filter(i => i['Status'] === 'In Progress').length
+  const pending = issues.filter(i => i['Status'] === 'Pending').length
+  const pending48h = issues.filter(i => i['Status'] === 'Pending 48H').length
+  const escalated = issues.filter(i => i['Status'] === 'Escalated').length
   const closed = issues.filter(i => i['Status'] === 'Closed').length
   const refunded = issues.filter(i => i['Amount Refund'] && i['Amount Refund'].trim() !== '').length
   const broken = issues.filter(i => i['Issue code'] === 'Broken').length
@@ -274,8 +274,9 @@ export default function Analytics() {
               <div className="animate-fade-in space-y-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                   <StatCard icon={HeadphonesIcon} label="Total Issues" value={total} color="#f59e0b" />
-                  <StatCard icon={AlertCircle} label="Open" value={open} sub={`${total ? ((open/total)*100).toFixed(0) : 0}% of total`} color="#fbbf24" />
-                  <StatCard icon={Activity} label="In Progress" value={inProgress} sub={`${total ? ((inProgress/total)*100).toFixed(0) : 0}% of total`} color="#60a5fa" />
+                  <StatCard icon={Clock} label="Pending" value={pending} sub={`${total ? ((pending/total)*100).toFixed(0) : 0}% of total`} color="#fb923c" />
+                  <StatCard icon={Clock} label="Pending 48H" value={pending48h} sub={`${total ? ((pending48h/total)*100).toFixed(0) : 0}% of total`} color="#fbbf24" />
+                  <StatCard icon={AlertCircle} label="Escalated" value={escalated} sub={`${total ? ((escalated/total)*100).toFixed(0) : 0}% of total`} color="#f87171" />
                   <StatCard icon={CheckCircle} label="Closed" value={closed} sub={`${total ? ((closed/total)*100).toFixed(0) : 0}% of total`} color="#34d399" />
                   <StatCard icon={Smartphone} label="Broken" value={broken} sub={`${total ? ((broken/total)*100).toFixed(0) : 0}% of total`} color="#f97316" />
                 </div>

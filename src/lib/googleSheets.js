@@ -9,7 +9,8 @@ const COLUMNS = [
   'Complaints Destination', 'Mobile Type', 'Sold By',
   'Customer Name', 'Contact Number', 'Description',
   'Final Conclusion', 'Status', 'Handled by', 'Issue code',
-  'Exception', 'Amount Refund', 'Follow up', 'Note',
+  'Exception', 'Amount Refund', 'Follow up',
+  'Ticket', 'Duplicate', 'Note',
 ]
 
 function getAuth() {
@@ -42,7 +43,7 @@ async function getSheetData(sheetName) {
   const sheets = getSheets()
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `${sheetName}!A:R`,
+    range: `${sheetName}!A:T`,
   })
   const rows = res.data.values || []
   if (rows.length <= 1) return []
@@ -67,10 +68,16 @@ export async function getIssueById(id) {
 
 export async function createIssue(data) {
   const sheets = getSheets()
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${SHEET_NAME}!A:A`,
+  })
+  const nextNum = String((res.data.values?.length || 1) + 1000)
+  data['Ticket'] = nextNum
   const row = objectToRow(data)
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_NAME}!A:R`,
+    range: `${SHEET_NAME}!A:T`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
   })
@@ -86,7 +93,7 @@ export async function updateIssue(id, data) {
   const row = objectToRow(data)
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
-    range: `${sheetName}!A${rowIndex}:R${rowIndex}`,
+    range: `${sheetName}!A${rowIndex}:T${rowIndex}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
   })
@@ -101,7 +108,7 @@ export async function deleteIssue(id) {
   const rowIndex = parseInt(parts[parts.length - 1])
   await sheets.spreadsheets.values.clear({
     spreadsheetId: SHEET_ID,
-    range: `${sheetName}!A${rowIndex}:R${rowIndex}`,
+    range: `${sheetName}!A${rowIndex}:T${rowIndex}`,
   })
   return { success: true }
 }

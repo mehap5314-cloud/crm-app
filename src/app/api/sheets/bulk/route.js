@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
 import { getAllIssues, updateIssue } from '@/lib/googleSheets'
+import { invalidateCache } from '@/lib/cache'
 import { NextResponse } from 'next/server'
 
 export async function PATCH(req) {
@@ -24,6 +25,7 @@ export async function PATCH(req) {
       updated++
     }
 
+    invalidateCache()
     return NextResponse.json({ success: true, updated })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

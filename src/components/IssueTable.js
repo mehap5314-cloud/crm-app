@@ -1,32 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Edit, Trash2, Search, ChevronDown, ChevronUp, Filter, Calendar, CheckSquare, Square, X } from 'lucide-react'
 
 const STATUS_STYLES = {
-  'Open': { bg: 'rgba(245,158,11,0.12)', text: '#fbbf24' },
-  'In Progress': { bg: 'rgba(59,130,246,0.12)', text: '#60a5fa' },
-  'Closed': { bg: 'rgba(16,185,129,0.12)', text: '#34d399' },
-  'Pending': { bg: 'rgba(249,115,22,0.12)', text: '#fb923c' },
-  'Cancelled': { bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
+  'Closed': { background: 'rgba(16,185,129,0.12)', color: '#34d399' },
+  'Pending': { background: 'rgba(249,115,22,0.12)', color: '#fb923c' },
+  'Pending 48H': { background: 'rgba(245,158,11,0.12)', color: '#fbbf24' },
+  'Escalated': { background: 'rgba(239,68,68,0.12)', color: '#f87171' },
 }
 
-const ROW_FLAGS = [
-  { test: (issue) => issue['Amount Refund'] && issue['Amount Refund'].trim() !== '', bg: 'rgba(239,68,68,0.08)', border: '3px solid #ef4444' },
-  { test: (issue) => issue['Issue code'] === 'Broken', bg: 'rgba(245,158,11,0.1)', border: '3px solid #f59e0b' },
+const TAG_PALETTE = [
+  { background: 'rgba(99,102,241,0.1)', color: '#818cf8' },
+  { background: 'rgba(139,92,246,0.1)', color: '#a78bfa' },
+  { background: 'rgba(14,165,233,0.1)', color: '#38bdf8' },
+  { background: 'rgba(168,85,247,0.1)', color: '#c084fc' },
+  { background: 'rgba(59,130,246,0.1)', color: '#60a5fa' },
+  { background: 'rgba(6,182,212,0.1)', color: '#22d3ee' },
+  { background: 'rgba(34,197,94,0.1)', color: '#4ade80' },
+  { background: 'rgba(244,63,94,0.1)', color: '#fb7185' },
+  { background: 'rgba(236,72,153,0.1)', color: '#f472b6' },
+  { background: 'rgba(251,146,60,0.1)', color: '#fdba74' },
+  { background: 'rgba(248,113,113,0.1)', color: '#fca5a5' },
+  { background: 'rgba(52,211,153,0.1)', color: '#6ee7b7' },
 ]
 
-function getRowFlags(issue) {
-  let found = null
-  for (const flag of ROW_FLAGS) {
-    if (flag.test(issue)) { found = flag; break }
-  }
-  return found
+function tagColor(val) {
+  if (!val) return TAG_PALETTE[0]
+  let h = 0
+  for (let i = 0; i < val.length; i++) h = ((h << 5) - h + val.charCodeAt(i)) | 0
+  return TAG_PALETTE[Math.abs(h) % TAG_PALETTE.length]
 }
 
-const ALL_COLUMNS = ['Customer Name', 'Contact Number', 'Issue code', 'Description', 'Branch', 'Mobile Type', 'Sold By', 'Handled by', 'Status']
+const ALL_COLUMNS = ['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Description', 'Branch', 'Mobile Type', 'Sold By', 'Handled by', 'Status']
 
 export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
   const { data: session } = useSession()
@@ -47,7 +55,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
 
   const isAdmin = session?.user?.isAdmin || false
 
-  const filtered = issues
+  const filtered = useMemo(() => issues
     .filter((issue) => {
       if (!search) return true
       const q = search.toLowerCase()
@@ -70,7 +78,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
       const aVal = (a[sortField] || '').toString()
       const bVal = (b[sortField] || '').toString()
       return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
-    })
+    }), [issues, search, statusFilter, issueCodeFilter, handledByFilter, branchFilter, dateFrom, dateTo, sortField, sortDir])
 
   const statuses = [...new Set(issues.map((i) => i['Status']).filter(Boolean))]
   const issueCodes = [...new Set(issues.map((i) => i['Issue code']).filter(Boolean))]
@@ -219,7 +227,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
                     {selected.size === filtered.length && filtered.length > 0 ? <CheckSquare size={15} /> : <Square size={15} />}
                   </button>
                 </th>
-                {['Customer Name', 'Contact Number', 'Issue code', 'Status', 'Branch', 'Start Call', 'Handled by', 'Source'].map(col => (
+                {['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Status', 'Branch', 'Start Call', 'Handled by', 'Amount Refund', 'Source'].map(col => (
                   <th key={col} onClick={() => toggleSort(col)}
                     className="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap"
                     style={{ color: 'var(--text-muted)' }}>
@@ -237,7 +245,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                    <td colSpan={11}>
                     <div className="flex flex-col items-center justify-center py-16 gap-3" style={{ color: 'var(--text-muted)' }}>
                       <Search size={32} className="opacity-20" />
                       <span className="text-sm">No issues found</span>
@@ -245,48 +253,69 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
                   </td>
                 </tr>
               ) : filtered.map((issue, idx) => {
-                const flag = getRowFlags(issue)
                 const isSelected = selected.has(issue.id)
                 return (
                   <tr key={issue.id}
                     className="transition-all duration-150 cursor-pointer"
                     style={{
-                      background: isSelected ? 'rgba(245,158,11,0.06)' : flag ? flag.bg : 'var(--bg-card)',
+                      background: isSelected ? 'rgba(245,158,11,0.06)' : 'var(--bg-card)',
                       borderTop: '1px solid var(--border-color)',
-                      borderRight: flag ? flag.border : 'none',
                     }}
                     onMouseEnter={e => {
                       if (!isSelected) e.currentTarget.style.background = 'var(--bg-card-hover)'
                     }}
                     onMouseLeave={e => {
-                      e.currentTarget.style.background = isSelected ? 'rgba(245,158,11,0.06)' : flag ? flag.bg : 'var(--bg-card)'
+                      e.currentTarget.style.background = isSelected ? 'rgba(245,158,11,0.06)' : 'var(--bg-card)'
                     }}
                   >
-                    <td className="px-3 py-3.5" onClick={e => e.stopPropagation()}>
+                    <td className="px-3 py-3.5 text-right" onClick={e => e.stopPropagation()}>
                       <button onClick={() => toggleSelect(issue.id)} className="p-1 rounded" style={{ color: 'var(--text-muted)' }}>
                         {isSelected ? <CheckSquare size={15} /> : <Square size={15} />}
                       </button>
                     </td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                    <td className="px-3 py-3.5 text-right font-mono text-xs font-bold" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--accent)' }}>
+                      {issue['Ticket'] || '-'}
+                    </td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
                       <span className="font-medium" style={{color: 'var(--text-primary)'}}>{issue['Customer Name'] || '-'}</span>
                     </td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Contact Number'] || '-'}</td>
-                    <td className="px-3 py-3.5 font-mono text-xs" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-muted)' }}>{issue['Issue code'] || '-'}</td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)}>
-                      <span className="inline-block px-2 py-1 rounded-lg text-xs font-medium"
-                        style={STATUS_STYLES[issue['Status']] || { bg: 'rgba(100,116,139,0.12)', text: '#94a3b8' }}>
-                        {issue['Status'] || 'Open'}
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Contact Number'] || '-'}</td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                      <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold tracking-wide"
+                        style={tagColor(issue['Issue code'])}>
+                        {issue['Issue code'] || '-'}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Branch'] || '-'}</td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Start Call'] || '-'}</td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Handled by'] || '-'}</td>
-                    <td className="px-3 py-3.5" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                      <span className="inline-block px-2 py-1 rounded-lg text-xs font-medium"
+                        style={STATUS_STYLES[issue['Status']] || { background: 'rgba(100,116,139,0.12)', color: '#94a3b8' }}>
+                        {issue['Status'] || 'Pending'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Branch'] || '-'}</td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Start Call'] || '-'}</td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                      <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold tracking-wide"
+                        style={tagColor(issue['Handled by'])}>
+                        {issue['Handled by'] || '-'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                      {issue['Amount Refund'] && issue['Amount Refund'].trim() !== '' ? (
+                        <span className="inline-block px-2 py-1 rounded-lg text-xs font-mono font-bold"
+                          style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171' }}>
+                          {issue['Amount Refund']}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
                       <span className="inline-block px-2 py-0.5 rounded-md text-xs font-mono" style={{ background: 'var(--accent-glow)', color: 'var(--accent)' }}>
                         {issue._sheet || '-'}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className="px-3 py-3.5 text-left">
                       <div className="flex gap-1 justify-end" onClick={e => e.stopPropagation()}>
                         <button onClick={() => router.push(`/dashboard/${issue.id}/edit`)}
                           className="p-1.5 rounded-lg transition-all duration-200"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -87,7 +87,14 @@ export default function Navbar({ onMenuClick }) {
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2" style={{ background: '#10b981', borderColor: 'var(--bg-primary)' }} />
                 </div>
                 <button
-                  onClick={() => signOut()}
+                  onClick={async () => {
+                    await fetch('/api/logout', { method: 'POST' })
+                    document.cookie.split(';').forEach(c => {
+                      const eq = c.indexOf('='); const name = eq > -1 ? c.substr(0, eq).trim() : c.trim()
+                      if (name.includes('next-auth')) document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970`
+                    })
+                    window.location.href = '/'
+                  }}
                   className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium"
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.background = 'rgba(239,68,68,0.1)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
