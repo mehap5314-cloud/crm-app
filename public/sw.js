@@ -1,4 +1,4 @@
-const CACHE = 'crm-v2';
+const CACHE = 'crm-v3';
 const ASSETS = ['/', '/manifest.json', '/icon.svg', '/favicon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -16,22 +16,25 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.includes('/api/')) {
-    e.respondWith(fetch(e.request));
-    return;
-  }
+  const { request } = e;
+  const url = new URL(request.url);
+
+  if (url.origin !== self.location.origin) return;
+  if (request.mode === 'navigate') return;
+  if (url.pathname.startsWith('/api/')) return;
+
+  if (request.method !== 'GET') return;
+
   e.respondWith(
-    caches.match(e.request).then((r) => {
-      return (
-        r ||
-        fetch(e.request).then((res) => {
-          if (res.ok && e.request.url.startsWith(self.location.origin)) {
-            const clone = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(e.request, clone));
-          }
-          return res;
-        })
-      );
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((res) => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, clone));
+        }
+        return res;
+      });
     })
   );
 });
