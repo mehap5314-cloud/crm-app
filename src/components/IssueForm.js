@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import ImageUpload from './ImageUpload'
-import { Save, ArrowLeft, FilePlus, AlertTriangle } from 'lucide-react'
+import { Save, ArrowLeft, AlertTriangle } from 'lucide-react'
 
 const BRANCHES = [
   'City 1', 'City 2', 'City 3', 'City 4', 'Elmerghany',
@@ -64,12 +63,6 @@ export default function IssueForm({ initialData }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [duplicates, setDuplicates] = useState([])
-  const [imageUrls, setImageUrls] = useState(() => {
-    if (!initialData) return []
-    const note = initialData['Note'] || ''
-    const imgMatch = note.match(/__IMAGES__:\s*(\[.*?\])/)
-    return imgMatch ? JSON.parse(imgMatch[1]) : []
-  })
 
   const isEdit = !!initialData
   const issuesCache = useRef(null)
@@ -108,12 +101,6 @@ export default function IssueForm({ initialData }) {
     try {
       const today = new Date().toISOString().split('T')[0]
       const data = { ...form }
-
-      let cleanNote = (data['Note'] || '').replace(/\n?__IMAGES__:\s*\[.*?\]/s, '').trim()
-      if (imageUrls.length > 0) {
-        cleanNote += `\n__IMAGES__: ${JSON.stringify(imageUrls)}`
-      }
-      data['Note'] = cleanNote
 
       if (!isEdit && !data['Start Call']) data['Start Call'] = today
 
@@ -219,11 +206,6 @@ export default function IssueForm({ initialData }) {
             )}
           </div>
         ))}
-      </div>
-
-      <div className="pt-6 mt-6 border-t" style={{borderColor: 'var(--border-color)'}}>
-        <label className="block text-xs font-semibold tracking-wider mb-2" style={{color: 'var(--text-muted)'}}>Attachments</label>
-        <ImageUpload images={imageUrls} onImagesChange={setImageUrls} />
       </div>
 
       <div className="flex items-center justify-between pt-6 mt-6 border-t" style={{borderColor: 'var(--border-color)'}}>
