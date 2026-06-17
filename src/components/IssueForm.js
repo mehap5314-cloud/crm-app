@@ -49,7 +49,7 @@ const FIELDS = [
   { key: 'Status', label: 'Status', type: 'select', options: ['Pending', 'Pending 48H', 'Closed', 'Escalated'] },
   { key: 'Handled by', label: 'Handled By', type: 'select', options: HANDLED_BY },
   { key: 'Issue code', label: 'Issue Code', type: 'select', options: ISSUE_CODES },
-  { key: 'Exception', label: 'Exception', type: 'text' },
+  { key: 'Exception', label: 'Exception', type: 'checkbox' },
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
   { key: 'Ticket', label: 'Ticket', type: 'text' },
   { key: 'Duplicate', label: 'Duplicate', type: 'text' },
@@ -170,7 +170,18 @@ export default function IssueForm({ initialData }) {
             <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
               {field.label}
             </label>
-            {field.type === 'textarea' ? (
+            {field.type === 'checkbox' ? (
+              <label className="flex items-center gap-3 py-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={(form[field.key] || '') === 'Yes'}
+                  onChange={(e) => handleChange(field.key, e.target.checked ? 'Yes' : '')}
+                  className="w-5 h-5 rounded border-2 accent-amber-500 cursor-pointer"
+                  style={{borderColor: 'var(--border-color)'}}
+                />
+                <span className="text-sm" style={{color: 'var(--text-secondary)'}}>Yes / No</span>
+              </label>
+            ) : field.type === 'textarea' ? (
               <textarea
                 value={form[field.key] || ''}
                 onChange={(e) => handleChange(field.key, e.target.value)}
