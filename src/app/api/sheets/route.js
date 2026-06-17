@@ -12,7 +12,8 @@ export async function GET() {
   if (cached) return NextResponse.json(cached)
 
   try {
-    const issues = await getAllIssues()
+    const all = await getAllIssues()
+    const issues = all.map(({ Note, ...rest }) => rest)
     setCache(issues)
     return NextResponse.json(issues)
   } catch (err) {
