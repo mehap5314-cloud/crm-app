@@ -26,6 +26,7 @@ export default function Navbar({ onMenuClick }) {
                 <span className="text-lg font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>CRM</span>
               </Link>
             </div>
+          </div>
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
