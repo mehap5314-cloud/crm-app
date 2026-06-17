@@ -52,7 +52,7 @@ const FIELDS = [
   { key: 'Exception', label: 'Exception', type: 'checkbox' },
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
   { key: 'Ticket', label: 'Ticket', type: 'text' },
-  { key: 'Duplicate', label: 'Duplicate', type: 'text' },
+
   { key: 'Follow up', label: 'Follow Up', type: 'textarea' },
   { key: 'Note', label: 'Note', type: 'textarea' },
 ]

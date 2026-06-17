@@ -41,7 +41,7 @@ const LABEL_MAP = {
   'Contact Number': 'Contact Number', 'Description': 'Description',
   'Final Conclusion': 'Final Conclusion', 'Status': 'Status', 'Handled by': 'Handled By',
   'Issue code': 'Issue Code', 'Exception': 'Exception', 'Amount Refund': 'Amount Refund',
-  'Ticket': 'Ticket', 'Duplicate': 'Duplicate',
+  'Ticket': 'Ticket',
   'Follow up': 'Follow Up', 'Note': 'Note',
 }
 
