@@ -1,5 +1,5 @@
 const cache = { data: null, expiry: 0 }
-const CACHE_TTL = 30000
+const CACHE_TTL = 300000
 
 export function getFromCache() {
   return (Date.now() < cache.expiry) ? cache.data : null

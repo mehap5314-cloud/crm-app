@@ -13,14 +13,18 @@ const COLUMNS = [
   'Ticket', 'Duplicate', 'Note',
 ]
 
+let _auth = null
+
 function getAuth() {
+  if (_auth) return _auth
   const key = JSON.parse(
     Buffer.from(process.env.GOOGLE_SERVICE_KEY_B64, 'base64').toString()
   )
-  return new google.auth.GoogleAuth({
+  _auth = new google.auth.GoogleAuth({
     credentials: key,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   })
+  return _auth
 }
 
 function getSheets() {
@@ -62,8 +66,21 @@ export async function getAllIssues() {
 }
 
 export async function getIssueById(id) {
-  const issues = await getAllIssues()
-  return issues.find((i) => i.id === String(id)) || null
+  const issueId = String(id)
+  const parts = issueId.split('-')
+  if (parts.length < 2) return null
+  const sheetName = parts.slice(0, -1).join('-')
+  const rowIndex = parseInt(parts[parts.length - 1])
+  if (isNaN(rowIndex) || rowIndex < 2) return null
+
+  const sheets = getSheets()
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${sheetName}!A${rowIndex}:T${rowIndex}`,
+  })
+  const row = res.data.values?.[0]
+  if (!row) return null
+  return { id: issueId, _sheet: sheetName, ...rowToObject(row) }
 }
 
 export async function createIssue(data) {
