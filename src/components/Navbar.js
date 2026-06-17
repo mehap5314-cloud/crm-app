@@ -1,22 +1,12 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import ThemeToggle from './ThemeToggle'
-import { LogOut, List, BarChart3, HeadphonesIcon, Menu, X } from 'lucide-react'
+import { LogOut, HeadphonesIcon, Menu } from 'lucide-react'
 
 export default function Navbar({ onMenuClick }) {
   const { data: session } = useSession()
-  const pathname = usePathname()
-  const [mobileOpen, setMobileOpen] = useState(false)
-
-  const links = [
-    { href: '/dashboard', label: 'All Issues', icon: List },
-  ]
-
-  const isActive = (href) => pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
 
   return (
     <nav className="sticky top-0 z-50 border-b" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-glass)', backdropFilter: 'blur(20px)' }}>
@@ -36,35 +26,6 @@ export default function Navbar({ onMenuClick }) {
                 <span className="text-lg font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>CRM</span>
               </Link>
             </div>
-            <div className="hidden sm:flex items-center gap-1">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
-                  style={{
-                    color: isActive(link.href) ? 'var(--accent)' : 'var(--text-secondary)',
-                    background: isActive(link.href) ? 'var(--accent-glow)' : 'transparent',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive(link.href)) {
-                      e.currentTarget.style.color = 'var(--text-primary)'
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive(link.href)) {
-                      e.currentTarget.style.color = 'var(--text-secondary)'
-                      e.currentTarget.style.background = 'transparent'
-                    }
-                  }}
-                >
-                  <link.icon size={16} />
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -102,36 +63,11 @@ export default function Navbar({ onMenuClick }) {
                   <LogOut size={16} />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
-                <button
-                  onClick={() => setMobileOpen(!mobileOpen)}
-                  className="sm:hidden btn-ghost p-2 rounded-xl"
-                >
-                  {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-                </button>
               </>
             )}
           </div>
         </div>
 
-        {mobileOpen && (
-          <div className="sm:hidden pb-4 pt-2 space-y-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-                style={{
-                  color: isActive(link.href) ? 'var(--accent)' : 'var(--text-secondary)',
-                  background: isActive(link.href) ? 'var(--accent-glow)' : 'transparent',
-                }}
-              >
-                <link.icon size={18} />
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
     </nav>
   )
