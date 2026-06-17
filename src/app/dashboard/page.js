@@ -94,7 +94,7 @@ export default function Dashboard() {
               <button
                 onClick={() => {
                   setLoading(true)
-                  fetch('/api/sheets?_=' + Date.now()).then(r => r.json()).then(d => { setIssues(Array.isArray(d) ? d : []); setError(''); setLoading(false) }).catch(e => { setError(e.message); setLoading(false) })
+                  fetch('/api/sheets?refresh=1').then(r => r.json()).then(d => { setIssues(Array.isArray(d) ? d : []); setError(''); setLoading(false) }).catch(e => { setError(e.message); setLoading(false) })
                 }}
                 className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
                 style={{ color: 'var(--text-secondary)' }}

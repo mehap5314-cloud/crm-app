@@ -4,12 +4,17 @@ import { getAllIssues, createIssue } from '@/lib/googleSheets'
 import { getFromCache, setCache, invalidateCache } from '@/lib/cache'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(req) {
   const session = await getServerSession(getAuthOptions())
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const cached = getFromCache()
-  if (cached) return NextResponse.json(cached)
+  const { searchParams } = new URL(req.url)
+  const forceRefresh = searchParams.has('refresh')
+
+  if (!forceRefresh) {
+    const cached = getFromCache()
+    if (cached) return NextResponse.json(cached)
+  }
 
   try {
     const all = await getAllIssues()
