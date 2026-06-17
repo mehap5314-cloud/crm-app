@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Edit, Trash2, Search, ChevronDown, ChevronUp, Filter, Calendar, CheckSquare, Square, X } from 'lucide-react'
+import { Edit, Trash2, Search, ChevronDown, ChevronUp, Filter, Calendar, CheckSquare, Square, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const STATUS_STYLES = {
   'Closed': { background: 'rgba(16,185,129,0.12)', color: '#34d399' },
@@ -36,10 +36,10 @@ function tagColor(val) {
 
 const ALL_COLUMNS = ['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Description', 'Branch', 'Mobile Type', 'Sold By', 'Handled by', 'Status']
 
-export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
+export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page, pageSize, onPageChange, onSearch, searchQuery }) {
   const { data: session } = useSession()
   const router = useRouter()
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(searchQuery || '')
   const [statusFilter, setStatusFilter] = useState('')
   const [issueCodeFilter, setIssueCodeFilter] = useState('')
   const [handledByFilter, setHandledByFilter] = useState('')
@@ -52,6 +52,11 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
   const [bulkStatus, setBulkStatus] = useState('')
   const [bulkHandledBy, setBulkHandledBy] = useState('')
   const [bulkLoading, setBulkLoading] = useState(false)
+  const searchTimer = useRef(null)
+
+  useEffect(() => {
+    setSearch(searchQuery || '')
+  }, [searchQuery])
 
   const isAdmin = session?.user?.isAdmin || false
 
@@ -136,6 +141,26 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
     else { setSortField(field); setSortDir('asc') }
   }
 
+  const totalPages = Math.ceil(total / pageSize) || 1
+
+  const visiblePages = useMemo(() => {
+    const pages = []
+    const maxVisible = 5
+    let start = Math.max(1, page - Math.floor(maxVisible / 2))
+    let end = Math.min(totalPages, start + maxVisible - 1)
+    if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+    return pages
+  }, [page, totalPages])
+
+  const handleSearchInput = (value) => {
+    setSearch(value)
+    clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      if (onSearch) onSearch(value)
+    }, 400)
+  }
+
   return (
     <div>
       <div className="flex flex-wrap gap-2 items-center mb-4">
@@ -145,7 +170,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
             type="text"
             placeholder="Search all fields..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             className="w-full pr-9 pl-3 py-2 rounded-xl text-sm"
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
           />
@@ -336,8 +361,74 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate }) {
           </table>
         </div>
       </div>
-      <div className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-        Showing {filtered.length} of {issues.length} issues
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          {search ? (
+            <>Found <span className="font-medium" style={{color: 'var(--text-primary)'}}>{filtered.length}</span> results</>
+          ) : (
+            <>Showing <span className="font-medium" style={{color: 'var(--text-primary)'}}>{(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)}</span> of <span className="font-medium" style={{color: 'var(--text-primary)'}}>{total}</span> issues</>
+          )}
+        </div>
+        {!search && totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onPageChange(1)}
+              disabled={page <= 1}
+              className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
+              style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
+            >
+              First
+            </button>
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+              className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <ChevronRight size={16} />
+            </button>
+            {visiblePages[0] > 1 && (
+              <>
+                <span className="px-2 py-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>...</span>
+              </>
+            )}
+            {visiblePages.map(p => (
+              <button
+                key={p}
+                onClick={() => onPageChange(p)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                style={{
+                  background: p === page ? 'var(--accent)' : 'var(--bg-secondary)',
+                  color: p === page ? '#fff' : 'var(--text-secondary)',
+                }}
+              >
+                {p}
+              </button>
+            ))}
+            {visiblePages[visiblePages.length - 1] < totalPages && (
+              <>
+                <span className="px-2 py-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>...</span>
+              </>
+            )}
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => onPageChange(totalPages)}
+              disabled={page >= totalPages}
+              className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
+              style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
+            >
+              Last
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

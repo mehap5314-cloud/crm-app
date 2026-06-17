@@ -20,7 +20,7 @@ export default function Report() {
   useEffect(() => {
     if (authStatus === 'unauthenticated') router.push('/')
     if (authStatus !== 'authenticated') return
-    fetch('/api/sheets').then(r => r.json()).then(d => { setIssues(Array.isArray(d) ? d : []); setLoading(false) }).catch(() => setLoading(false))
+    fetch('/api/sheets?all=true').then(r => r.json()).then(d => { setIssues(Array.isArray(d.issues) ? d.issues : []); setLoading(false) }).catch(() => setLoading(false))
   }, [authStatus, router])
 
   const dayIssues = issues.filter(i => (i['Start Call'] || '').startsWith(date))

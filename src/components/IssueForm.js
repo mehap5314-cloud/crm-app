@@ -71,8 +71,8 @@ export default function IssueForm({ initialData }) {
     if (!phone || phone.length < 3) { setDuplicates([]); return }
     try {
       if (!issuesCache.current) {
-        const res = await fetch('/api/sheets')
-        if (res.ok) issuesCache.current = await res.json()
+        const res = await fetch('/api/sheets?all=true')
+        if (res.ok) issuesCache.current = (await res.json()).issues
       }
       const matches = (issuesCache.current || []).filter(i => {
         if (isEdit && i.id === initialData.id) return false

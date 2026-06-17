@@ -65,6 +65,73 @@ export async function getAllIssues() {
   return results.flat()
 }
 
+const SEARCH_COLUMNS = ['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Description', 'Branch', 'Mobile Type', 'Sold By', 'Handled by', 'Status']
+
+async function getSheetRowCount(sheetName) {
+  const sheets = getSheets()
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${sheetName}!A:A`,
+  })
+  const rows = res.data.values || []
+  return Math.max(0, rows.length - 1)
+}
+
+export async function getTotalCountAll() {
+  const allSheets = [SHEET_NAME, ...EXTRA_SHEETS]
+  const counts = await Promise.all(allSheets.map(s => getSheetRowCount(s).catch(() => 0)))
+  return { sheets: allSheets, counts, total: counts.reduce((a, b) => a + b, 0) }
+}
+
+export async function getIssuesPage(page = 1, pageSize = 50) {
+  const { sheets, counts, total } = await getTotalCountAll()
+  const startIdx = (page - 1) * pageSize
+  const endIdx = Math.min(page * pageSize - 1, total - 1)
+  if (startIdx > endIdx) return []
+
+  const results = []
+  let accumulated = 0
+
+  for (let i = 0; i < sheets.length; i++) {
+    const sheetName = sheets[i]
+    const sheetCount = counts[i]
+    const sheetEnd = accumulated + sheetCount - 1
+
+    if (startIdx <= sheetEnd && endIdx >= accumulated) {
+      const localStart = Math.max(0, startIdx - accumulated) + 2
+      const localEnd = Math.min(sheetCount - 1, endIdx - accumulated) + 2
+
+      const s = getSheets()
+      const res = await s.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: `${sheetName}!A${localStart}:T${localEnd}`,
+      })
+      const rows = res.data.values || []
+      rows.forEach((row, idx) => {
+        results.push({
+          id: `${sheetName}-${localStart + idx}`,
+          _sheet: sheetName,
+          ...rowToObject(row),
+        })
+      })
+    }
+
+    accumulated += sheetCount
+    if (accumulated > endIdx) break
+  }
+
+  return results
+}
+
+export async function getSearchIssues(query) {
+  const all = await getAllIssues()
+  if (!query) return all
+  const q = query.toLowerCase()
+  return all.filter(issue =>
+    SEARCH_COLUMNS.some(col => (issue[col] || '').toLowerCase().includes(q))
+  )
+}
+
 export async function getIssueById(id) {
   const issueId = String(id)
   const parts = issueId.split('-')

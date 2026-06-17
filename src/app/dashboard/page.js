@@ -17,26 +17,83 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [pageSize] = useState(50)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [stats, setStats] = useState(null)
 
-  const fetchIssues = useCallback(async () => {
+  const fetchPage = useCallback(async (p, search) => {
     try {
       setLoading(true)
-      const res = await fetch('/api/sheets')
+      const params = new URLSearchParams()
+      if (search) {
+        params.set('search', search)
+      } else {
+        params.set('page', p || page)
+        params.set('pageSize', pageSize)
+      }
+      const res = await fetch(`/api/sheets?${params}`)
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
-      setIssues(Array.isArray(data) ? data : [])
+      setIssues(Array.isArray(data.issues) ? data.issues : [])
+      setTotal(data.total || 0)
       setError('')
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }, [page, pageSize])
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/sheets/stats')
+      if (res.ok) {
+        const data = await res.json()
+        setStats(data)
+      }
+    } catch {}
   }, [])
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
-    if (status === 'authenticated') fetchIssues()
-  }, [status, router, fetchIssues])
+    if (status === 'authenticated') {
+      fetchPage(1, '')
+      fetchStats()
+    }
+  }, [status, router, fetchPage, fetchStats])
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage)
+    fetchPage(newPage, searchQuery)
+  }
+
+  const handleSearch = (query) => {
+    setSearchQuery(query)
+    setPage(1)
+    fetchPage(1, query)
+  }
+
+  const handleForceRefresh = () => {
+    setLoading(true)
+    fetch('/api/sheets?refresh=1').then(r => r.json()).then(data => {
+      setIssues(Array.isArray(data.issues) ? data.issues : [])
+      setTotal(data.total || 0)
+      setError('')
+      setLoading(false)
+    }).catch(e => { setError(e.message); setLoading(false) })
+    fetchStats()
+  }
+
+  const STATS = stats ? [
+    { icon: HeadphonesIcon, label: 'Total', value: stats.total, color: '#f59e0b', sub: `${stats.pending + stats.pending48h + stats.escalated} pending`, filter: null },
+    { icon: AlertCircle, label: 'Pending', value: stats.pending, color: '#fb923c', filter: 'Pending' },
+    { icon: Clock, label: 'Pending 48H', value: stats.pending48h, color: '#fbbf24', filter: 'Pending 48H' },
+    { icon: AlertCircle, label: 'Escalated', value: stats.escalated, color: '#f87171', filter: 'Escalated' },
+    { icon: CheckCircle, label: 'Closed', value: stats.closed, color: '#34d399', filter: 'Closed' },
+    { icon: Clock, label: 'Today', value: stats.today, color: '#818cf8', filter: 'Today' },
+  ] : []
 
   const filteredIssues = activeFilter
     ? (activeFilter === 'Today'
@@ -49,19 +106,11 @@ export default function Dashboard() {
       const res = await fetch(`/api/sheets/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       setIssues((prev) => prev.filter((i) => i.id !== id))
+      setTotal(t => t - 1)
     } catch (err) {
       alert(err.message)
     }
   }
-
-  const STATS = [
-    { icon: HeadphonesIcon, label: 'Total', value: issues.length, color: '#f59e0b', sub: `${issues.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H' || i['Status'] === 'Escalated').length} pending`, filter: null },
-    { icon: AlertCircle, label: 'Pending', value: issues.filter(i => i['Status'] === 'Pending').length, color: '#fb923c', filter: 'Pending' },
-    { icon: Clock, label: 'Pending 48H', value: issues.filter(i => i['Status'] === 'Pending 48H').length, color: '#fbbf24', filter: 'Pending 48H' },
-    { icon: AlertCircle, label: 'Escalated', value: issues.filter(i => i['Status'] === 'Escalated').length, color: '#f87171', filter: 'Escalated' },
-    { icon: CheckCircle, label: 'Closed', value: issues.filter(i => i['Status'] === 'Closed').length, color: '#34d399', filter: 'Closed' },
-    { icon: Clock, label: 'Today', value: issues.filter(i => (i['Start Call'] || '').startsWith(new Date().toISOString().split('T')[0])).length, color: '#818cf8', filter: 'Today' },
-  ]
 
   if (status === 'loading' || status === 'unauthenticated') return null
 
@@ -92,10 +141,7 @@ export default function Dashboard() {
                 New Issue
               </Link>
               <button
-                onClick={() => {
-                  setLoading(true)
-                  fetch('/api/sheets?refresh=1').then(r => r.json()).then(d => { setIssues(Array.isArray(d) ? d : []); setError(''); setLoading(false) }).catch(e => { setError(e.message); setLoading(false) })
-                }}
+                onClick={handleForceRefresh}
                 className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-light)' }}
@@ -114,7 +160,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {!loading && issues.length > 0 && (
+          {!loading && stats && (
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6 animate-fade-in">
               {STATS.map((stat, i) => (
                 <button
@@ -166,7 +212,17 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="animate-fade-in">
-              <IssueTable issues={filteredIssues} onDelete={handleDelete} onBulkUpdate={fetchIssues} />
+              <IssueTable
+                issues={filteredIssues}
+                onDelete={handleDelete}
+                onBulkUpdate={() => { fetchPage(page, searchQuery); fetchStats() }}
+                total={total}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onSearch={handleSearch}
+                searchQuery={searchQuery}
+              />
             </div>
           )}
         </main>

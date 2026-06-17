@@ -158,10 +158,10 @@ export default function Analytics() {
   async function fetchIssues() {
     try {
       setLoading(true)
-      const res = await fetch('/api/sheets')
+      const res = await fetch('/api/sheets?all=true')
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
-      setIssues(Array.isArray(data) ? data : [])
+      setIssues(Array.isArray(data.issues) ? data.issues : [])
       setError('')
     } catch (err) {
       setError(err.message)
