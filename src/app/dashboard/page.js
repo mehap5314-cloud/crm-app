@@ -215,19 +215,20 @@ export default function Dashboard() {
           )}
 
           {!followupsLoading && followups.length > 0 && (
-            <div className="mb-6 rounded-xl border overflow-hidden animate-slide-up" style={{ borderColor: 'rgba(251,146,60,0.3)', background: 'rgba(251,146,60,0.05)' }}>
-              <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'rgba(251,146,60,0.15)' }}>
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: 'rgba(251,146,60,0.15)' }}>
-                  <Bell size={16} className="text-orange-400" />
+            <div className="mb-6 rounded-2xl border overflow-hidden animate-slide-up" style={{ borderColor: 'rgba(251,146,60,0.25)', background: 'var(--bg-card)' }}>
+              <div className="flex items-center gap-4 p-5 border-b" style={{ borderColor: 'rgba(251,146,60,0.12)' }}>
+                <div className="flex items-center justify-center w-12 h-12 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(251,146,60,0.2), rgba(251,146,60,0.05))', border: '1px solid rgba(251,146,60,0.2)' }}>
+                  <Bell size={22} className="text-orange-400" />
                 </div>
                 <div>
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{followups.length} Follow-up{followups.length !== 1 ? 's' : ''} Due</span>
-                  <span className="text-xs mr-2" style={{ color: 'var(--text-muted)' }}>Issues with pending follow-ups that need attention</span>
+                  <span className="text-lg font-heading font-bold" style={{ color: 'var(--text-primary)' }}>{followups.length}</span>
+                  <span className="text-sm mr-2 font-medium" style={{ color: 'var(--text-secondary)' }}>Follow-ups Due</span>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Issues with pending follow-ups that need attention</p>
                 </div>
               </div>
-              <div className="divide-y" style={{ borderColor: 'rgba(251,146,60,0.1)' }}>
+              <div className="divide-y" style={{ borderColor: 'rgba(251,146,60,0.08)' }}>
                 {followups.slice(0, 5).map(issue => (
-                  <Link key={issue.id} href={`/dashboard/${issue.id}`} className="flex items-center justify-between px-5 py-3 transition-all hover:opacity-80">
+                  <Link key={issue.id} href={`/dashboard/${issue.id}`} className="flex items-center justify-between px-5 py-3.5 transition-all hover:opacity-80">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-mono font-bold shrink-0" style={{ color: 'var(--accent)' }}>{issue['Ticket'] || '-'}</span>
                       <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{issue['Customer Name'] || 'Unknown'}</span>
