@@ -53,6 +53,7 @@ const FIELDS = [
   { key: 'Handled by', label: 'Handled By', type: 'select', options: HANDLED_BY },
   { key: 'Issue code', label: 'Issue Code', type: 'select', options: ISSUE_CODES },
   { key: 'Exception', label: 'Exception', type: 'checkbox' },
+  { key: 'Exception End Date', label: 'Exception End Date', type: 'exceptionDate' },
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
   { key: 'Ticket', label: 'Ticket', type: 'text' },
 
@@ -221,6 +222,12 @@ export default function IssueForm({ initialData }) {
                 onChange={(v) => handleChange(field.key, v)}
                 placeholder={field.label}
               />
+            ) : field.type === 'exceptionDate' ? (
+              <CustomDatePicker
+                value={exceptionEnd}
+                onChange={(v) => setExceptionEnd(v)}
+                placeholder="Select end date..."
+              />
             ) : field.type === 'select' ? (
               <CustomSelect
                 value={form[field.key] || ''}
@@ -244,17 +251,6 @@ export default function IssueForm({ initialData }) {
             )}
           </div>
         ))}
-      </div>
-
-      <div className="mt-4">
-        <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
-          Exception End Date
-        </label>
-        <CustomDatePicker
-          value={exceptionEnd}
-          onChange={(v) => setExceptionEnd(v)}
-          placeholder="Select end date..."
-        />
       </div>
 
       <div className="flex items-center justify-between pt-6 mt-6 border-t" style={{borderColor: 'var(--border-color)'}}>
