@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, ArrowLeft, AlertTriangle } from 'lucide-react'
+import CustomSelect from './CustomSelect'
 
 const BRANCHES = [
   'City 1', 'City 2', 'City 3', 'City 4', 'Elmerghany',
@@ -190,18 +191,12 @@ export default function IssueForm({ initialData }) {
                 style={{background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)'}}
               />
             ) : field.type === 'select' ? (
-              <select
-                dir="ltr"
+              <CustomSelect
                 value={form[field.key] || ''}
-                onChange={(e) => handleChange(field.key, e.target.value)}
-                className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
-                style={{background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)'}}
-              >
-                <option value="">Select {field.label}...</option>
-                {field.options.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                onChange={(v) => handleChange(field.key, v)}
+                options={field.options}
+                placeholder={`Select ${field.label}...`}
+              />
             ) : (
               <input
                 type={field.type}

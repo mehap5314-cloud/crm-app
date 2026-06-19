@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Edit, Trash2, Search, ChevronDown, ChevronUp, Filter, Calendar, CheckSquare, Square, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import CustomSelect from './CustomSelect'
 
 const STATUS_STYLES = {
   'Closed': { background: 'rgba(16,185,129,0.12)', color: '#34d399' },
@@ -175,30 +176,10 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
           />
         </div>
-        <select dir="ltr" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl text-sm cursor-pointer"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-          <option value="">Status</option>
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select dir="ltr" value={issueCodeFilter} onChange={e => setIssueCodeFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl text-sm cursor-pointer"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-          <option value="">Code</option>
-          {issueCodes.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select dir="ltr" value={handledByFilter} onChange={e => setHandledByFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl text-sm cursor-pointer"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-          <option value="">Handled By</option>
-          {handledByList.map(h => <option key={h} value={h}>{h}</option>)}
-        </select>
-        <select dir="ltr" value={branchFilter} onChange={e => setBranchFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl text-sm cursor-pointer"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-          <option value="">Branch</option>
-          {branchList.map(b => <option key={b} value={b}>{b}</option>)}
-        </select>
+        <div className="w-[130px]"><CustomSelect value={statusFilter} onChange={setStatusFilter} options={statuses} placeholder="Status" /></div>
+        <div className="w-[130px]"><CustomSelect value={issueCodeFilter} onChange={setIssueCodeFilter} options={issueCodes} placeholder="Code" /></div>
+        <div className="w-[140px]"><CustomSelect value={handledByFilter} onChange={setHandledByFilter} options={handledByList} placeholder="Handled By" /></div>
+        <div className="w-[130px]"><CustomSelect value={branchFilter} onChange={setBranchFilter} options={branchList} placeholder="Branch" /></div>
         <div className="flex items-center gap-1">
           <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
           <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
@@ -218,18 +199,8 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
             <X size={14} />
           </button>
           <div className="h-5 w-px" style={{ background: 'var(--border-color)' }} />
-          <select dir="ltr" value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}
-            className="px-3 py-1.5 rounded-lg text-sm cursor-pointer"
-            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-            <option value="">Set Status...</option>
-            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select dir="ltr" value={bulkHandledBy} onChange={e => setBulkHandledBy(e.target.value)}
-            className="px-3 py-1.5 rounded-lg text-sm cursor-pointer"
-            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-            <option value="">Set Handled By...</option>
-            {handledByList.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
+          <div className="w-[150px]"><CustomSelect value={bulkStatus} onChange={setBulkStatus} options={statuses} placeholder="Set Status..." /></div>
+          <div className="w-[160px]"><CustomSelect value={bulkHandledBy} onChange={setBulkHandledBy} options={handledByList} placeholder="Set Handled By..." /></div>
           <button onClick={applyBulk} disabled={bulkLoading || (!bulkStatus && !bulkHandledBy)}
             className="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all"
             style={{
