@@ -116,7 +116,7 @@ export default function IssueForm({ initialData }) {
 
       if (!isEdit && !data['Start Call']) data['Start Call'] = today
 
-      if (exceptionEnd && data['Exception'] === 'Yes') {
+      if (exceptionEnd) {
         const note = data['Note'] || ''
         const cleaned = note.replace(/__EX_END__:\S+\s*/g, '').trim()
         data['Note'] = `__EX_END__:${exceptionEnd} ${cleaned}`.trim()
@@ -197,53 +197,16 @@ export default function IssueForm({ initialData }) {
               {field.label}
             </label>
             {field.type === 'checkbox' ? (
-              <div>
-                <label className="flex items-center gap-3 py-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={(form[field.key] || '') === 'Yes'}
-                    onChange={(e) => handleChange(field.key, e.target.checked ? 'Yes' : '')}
-                    className="w-5 h-5 rounded border-2 accent-amber-500 cursor-pointer"
-                    style={{borderColor: 'var(--border-color)'}}
-                  />
-                  <span className="text-sm" style={{color: 'var(--text-secondary)'}}>Yes / No</span>
-                </label>
-                {field.key === 'Exception' && (form['Exception'] || '') === 'Yes' && (
-                  <div className="mt-2">
-                    <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
-                      Exception End Date
-                    </label>
-                    <CustomDatePicker
-                      value={exceptionEnd}
-                      onChange={(v) => setExceptionEnd(v)}
-                      placeholder="Select end date..."
-                    />
-                  </div>
-                )}
-              </div>
-            ) : field.key === 'Exception' && (form['Exception'] || '') === 'Yes' ? (
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 py-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={true}
-                    onChange={(e) => handleChange('Exception', e.target.checked ? 'Yes' : '')}
-                    className="w-5 h-5 rounded border-2 accent-amber-500 cursor-pointer"
-                    style={{borderColor: 'var(--border-color)'}}
-                  />
-                  <span className="text-sm" style={{color: 'var(--text-secondary)'}}>Active</span>
-                </label>
-                <div>
-                  <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
-                    Exception End Date
-                  </label>
-                  <CustomDatePicker
-                    value={exceptionEnd}
-                    onChange={(v) => setExceptionEnd(v)}
-                    placeholder="Select end date..."
-                  />
-                </div>
-              </div>
+              <label className="flex items-center gap-3 py-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={(form[field.key] || '') === 'Yes'}
+                  onChange={(e) => handleChange(field.key, e.target.checked ? 'Yes' : '')}
+                  className="w-5 h-5 rounded border-2 accent-amber-500 cursor-pointer"
+                  style={{borderColor: 'var(--border-color)'}}
+                />
+                <span className="text-sm" style={{color: 'var(--text-secondary)'}}>Yes / No</span>
+              </label>
             ) : field.type === 'textarea' ? (
               <textarea
                 value={form[field.key] || ''}
@@ -281,6 +244,17 @@ export default function IssueForm({ initialData }) {
             )}
           </div>
         ))}
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
+          Exception End Date
+        </label>
+        <CustomDatePicker
+          value={exceptionEnd}
+          onChange={(v) => setExceptionEnd(v)}
+          placeholder="Select end date..."
+        />
       </div>
 
       <div className="flex items-center justify-between pt-6 mt-6 border-t" style={{borderColor: 'var(--border-color)'}}>

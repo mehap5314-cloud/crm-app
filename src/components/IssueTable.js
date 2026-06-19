@@ -305,7 +305,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
 
                         const note = issue['Note'] || ''
                         const exMatch = note.match(/__EX_END__:(\S+)/)
-                        const isExceptionActive = issue['Exception'] === 'Yes' && exMatch && new Date(exMatch[1]) >= new Date(new Date().toISOString().split('T')[0])
+                        const isExceptionActive = exMatch && new Date(exMatch[1]) >= new Date(new Date().toISOString().split('T')[0])
 
                         if (isExceptionActive) {
                           return (

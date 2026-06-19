@@ -126,8 +126,8 @@ export default function IssueDetail() {
                     <div key={key} className="p-5" style={{ background: 'var(--bg-card)' }}>
                       <div className="text-xs font-semibold tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>{label}</div>
                       <div className="text-sm" style={{color: 'var(--text-primary)'}}>
-                        {key === 'Exception' && issue['Exception'] === 'Yes' && exceptionEnd ? (
-                          <span>Yes <span className="text-xs mr-1" style={{color: 'var(--text-muted)'}}>(until {exceptionEnd})</span></span>
+                        {key === 'Exception' && exceptionEnd ? (
+                          <span>{issue[key] || 'Yes'} <span className="text-xs mr-1" style={{color: 'var(--text-muted)'}}>(until {exceptionEnd})</span></span>
                         ) : (
                           issue[key] || <span style={{ color: 'var(--text-muted)' }}>-</span>
                         )}
