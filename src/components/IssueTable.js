@@ -302,6 +302,19 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                       {(() => {
                         const start = issue['Start Call']
                         if (!start) return <span style={{ color: 'var(--text-muted)' }}>-</span>
+
+                        const note = issue['Note'] || ''
+                        const exMatch = note.match(/__EX_END__:(\S+)/)
+                        const isExceptionActive = issue['Exception'] === 'Yes' && exMatch && new Date(exMatch[1]) >= new Date(new Date().toISOString().split('T')[0])
+
+                        if (isExceptionActive) {
+                          return (
+                            <span className="inline-block px-2 py-0.5 rounded text-xs font-mono font-bold" style={{ background: 'rgba(100,116,139,0.12)', color: '#94a3b8' }}>
+                              ⏸
+                            </span>
+                          )
+                        }
+
                         const diff = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24))
                         const color = issue['Status'] === 'Closed' ? '#34d399' : diff <= 1 ? '#34d399' : diff <= 2 ? '#fbbf24' : '#f87171'
                         const bg = issue['Status'] === 'Closed' ? 'rgba(16,185,129,0.1)' : diff <= 1 ? 'rgba(16,185,129,0.1)' : diff <= 2 ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.12)'

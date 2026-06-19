@@ -53,11 +53,16 @@ export default function IssueDetail() {
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activity, setActivity] = useState([])
+  const [exceptionEnd, setExceptionEnd] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
     if (status !== 'authenticated') return
-    fetch(`/api/sheets/${params.id}`).then(r => r.json()).then(d => { setIssue(d); setLoading(false) }).catch(() => setLoading(false))
+    fetch(`/api/sheets/${params.id}`).then(r => r.json()).then(d => { setIssue(d); setLoading(false)
+      const note = d['Note'] || ''
+      const m = note.match(/__EX_END__:(\S+)/)
+      if (m) setExceptionEnd(m[1])
+    }).catch(() => setLoading(false))
     fetch(`/api/activity?issueId=${params.id}`).then(r => r.json()).then(d => setActivity(Array.isArray(d) ? d : [])).catch(() => {})
   }, [status, params.id, router])
 
@@ -120,7 +125,13 @@ export default function IssueDetail() {
                   {Object.entries(LABEL_MAP).map(([key, label]) => (
                     <div key={key} className="p-5" style={{ background: 'var(--bg-card)' }}>
                       <div className="text-xs font-semibold tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>{label}</div>
-                      <div className="text-sm" style={{color: 'var(--text-primary)'}}>{issue[key] || <span style={{ color: 'var(--text-muted)' }}>-</span>}</div>
+                      <div className="text-sm" style={{color: 'var(--text-primary)'}}>
+                        {key === 'Exception' && issue['Exception'] === 'Yes' && exceptionEnd ? (
+                          <span>Yes <span className="text-xs mr-1" style={{color: 'var(--text-muted)'}}>(until {exceptionEnd})</span></span>
+                        ) : (
+                          issue[key] || <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
