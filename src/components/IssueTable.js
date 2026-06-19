@@ -239,7 +239,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                     {selected.size === filtered.length && filtered.length > 0 ? <CheckSquare size={15} /> : <Square size={15} />}
                   </button>
                 </th>
-                {['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Status', 'Branch', 'Start Call', 'Handled by', 'Amount Refund', 'Source'].map(col => (
+                {['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Days', 'Status', 'Branch', 'Start Call', 'Handled by', 'Amount Refund', 'Source'].map(col => (
                   <th key={col} onClick={() => toggleSort(col)}
                     className="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap"
                     style={{ color: 'var(--text-muted)' }}>
@@ -257,7 +257,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                    <td colSpan={11}>
+                    <td colSpan={12}>
                     <div className="flex flex-col items-center justify-center py-16 gap-3" style={{ color: 'var(--text-muted)' }}>
                       <Search size={32} className="opacity-20" />
                       <span className="text-sm">No issues found</span>
@@ -299,20 +299,25 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                       </span>
                     </td>
                     <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
+                      {(() => {
+                        const start = issue['Start Call']
+                        if (!start) return <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        const diff = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24))
+                        const color = issue['Status'] === 'Closed' ? '#34d399' : diff <= 1 ? '#34d399' : diff <= 2 ? '#fbbf24' : '#f87171'
+                        const bg = issue['Status'] === 'Closed' ? 'rgba(16,185,129,0.1)' : diff <= 1 ? 'rgba(16,185,129,0.1)' : diff <= 2 ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.12)'
+                        return (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-mono font-bold" style={{ background: bg, color }}>
+                            {issue['Status'] === 'Closed' ? '✓' : `${diff}d`}
+                          </span>
+                        )
+                      })()}
+                    </td>
+                    <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
                       <div className="flex items-center gap-1.5 justify-end">
                         <span className="inline-block px-2 py-1 rounded-lg text-xs font-medium"
                           style={STATUS_STYLES[issue['Status']] || { background: 'rgba(100,116,139,0.12)', color: '#94a3b8' }}>
                           {issue['Status'] || 'Pending'}
                         </span>
-                        {(() => {
-                          const sla = getSLAStyle(issue)
-                          if (!sla) return null
-                          return (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono font-bold" style={{ background: sla.bg, color: sla.color }}>
-                              {sla.label}
-                            </span>
-                          )
-                        })()}
                       </div>
                     </td>
                     <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Branch'] || '-'}</td>
