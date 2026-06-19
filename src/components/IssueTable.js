@@ -175,25 +175,25 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
           />
         </div>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+        <select dir="rtl" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           className="px-3 py-2 rounded-xl text-sm cursor-pointer"
           style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
           <option value="">Status</option>
           {statuses.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={issueCodeFilter} onChange={e => setIssueCodeFilter(e.target.value)}
+        <select dir="rtl" value={issueCodeFilter} onChange={e => setIssueCodeFilter(e.target.value)}
           className="px-3 py-2 rounded-xl text-sm cursor-pointer"
           style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
           <option value="">Code</option>
           {issueCodes.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select value={handledByFilter} onChange={e => setHandledByFilter(e.target.value)}
+        <select dir="rtl" value={handledByFilter} onChange={e => setHandledByFilter(e.target.value)}
           className="px-3 py-2 rounded-xl text-sm cursor-pointer"
           style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
           <option value="">Handled By</option>
           {handledByList.map(h => <option key={h} value={h}>{h}</option>)}
         </select>
-        <select value={branchFilter} onChange={e => setBranchFilter(e.target.value)}
+        <select dir="rtl" value={branchFilter} onChange={e => setBranchFilter(e.target.value)}
           className="px-3 py-2 rounded-xl text-sm cursor-pointer"
           style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
           <option value="">Branch</option>
@@ -218,13 +218,13 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
             <X size={14} />
           </button>
           <div className="h-5 w-px" style={{ background: 'var(--border-color)' }} />
-          <select value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}
+          <select dir="rtl" value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}
             className="px-3 py-1.5 rounded-lg text-sm cursor-pointer"
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
             <option value="">Set Status...</option>
             {statuses.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select value={bulkHandledBy} onChange={e => setBulkHandledBy(e.target.value)}
+          <select dir="rtl" value={bulkHandledBy} onChange={e => setBulkHandledBy(e.target.value)}
             className="px-3 py-1.5 rounded-lg text-sm cursor-pointer"
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
             <option value="">Set Handled By...</option>
