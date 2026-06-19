@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
 import IssueTable from '@/components/IssueTable'
-import { RefreshCw, AlertCircle, HeadphonesIcon, Plus, Activity, CheckCircle, Clock, Bell } from 'lucide-react'
+import { RefreshCw, AlertCircle, HeadphonesIcon, Plus, Activity, CheckCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Dashboard() {
@@ -23,8 +23,6 @@ export default function Dashboard() {
   const [pageSize] = useState(50)
   const [searchQuery, setSearchQuery] = useState('')
   const [stats, setStats] = useState(null)
-  const [followups, setFollowups] = useState([])
-  const [followupsLoading, setFollowupsLoading] = useState(false)
 
   const fetchPage = useCallback(async (p, search) => {
     try {
@@ -59,23 +57,11 @@ export default function Dashboard() {
     } catch {}
   }, [])
 
-  const fetchFollowups = useCallback(async () => {
-    try {
-      setFollowupsLoading(true)
-      const res = await fetch('/api/sheets/followups')
-      if (res.ok) {
-        const data = await res.json()
-        setFollowups(Array.isArray(data) ? data : [])
-      }
-    } catch {} finally { setFollowupsLoading(false) }
-  }, [])
-
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
     if (status === 'authenticated') {
       fetchPage(1, '')
       fetchStats()
-      fetchFollowups()
     }
   }, [status, router, fetchPage, fetchStats])
 
@@ -99,7 +85,6 @@ export default function Dashboard() {
       setLoading(false)
     }).catch(e => { setError(e.message); setLoading(false) })
     fetchStats()
-    fetchFollowups()
   }
 
   const STATS = stats ? [
@@ -211,40 +196,6 @@ export default function Dashboard() {
                   {stat.sub && <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{stat.sub}</div>}
                 </button>
               ))}
-            </div>
-          )}
-
-          {!followupsLoading && followups.length > 0 && (
-            <div className="mb-6 rounded-2xl border overflow-hidden animate-slide-up" style={{ borderColor: 'rgba(251,146,60,0.25)', background: 'var(--bg-card)' }}>
-              <div className="flex items-center gap-4 p-5 border-b" style={{ borderColor: 'rgba(251,146,60,0.12)' }}>
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(251,146,60,0.2), rgba(251,146,60,0.05))', border: '1px solid rgba(251,146,60,0.2)' }}>
-                  <Bell size={22} className="text-orange-400" />
-                </div>
-                <div>
-                  <span className="text-lg font-heading font-bold" style={{ color: 'var(--text-primary)' }}>{followups.length}</span>
-                  <span className="text-sm mr-2 font-medium" style={{ color: 'var(--text-secondary)' }}>Follow-ups Due</span>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Issues with pending follow-ups that need attention</p>
-                </div>
-              </div>
-              <div className="divide-y" style={{ borderColor: 'rgba(251,146,60,0.08)' }}>
-                {followups.slice(0, 5).map(issue => (
-                  <Link key={issue.id} href={`/dashboard/${issue.id}`} className="flex items-center justify-between px-5 py-3.5 transition-all hover:opacity-80">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-mono font-bold shrink-0" style={{ color: 'var(--accent)' }}>{issue['Ticket'] || '-'}</span>
-                      <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{issue['Customer Name'] || 'Unknown'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Follow-up: {issue['Follow up']}</span>
-                      <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)' }}>{issue['Status']}</span>
-                    </div>
-                  </Link>
-                ))}
-                {followups.length > 5 && (
-                  <div className="px-5 py-3 text-center">
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>+{followups.length - 5} more</span>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
