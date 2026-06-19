@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { ChevronDown, Search } from 'lucide-react'
 
 const TAG_PALETTE = [
   { bg: 'rgba(99,102,241,0.12)', color: '#818cf8' },
@@ -33,17 +33,35 @@ function getTagStyle(val) {
   return TAG_PALETTE[Math.abs(h) % TAG_PALETTE.length]
 }
 
-export default function CustomSelect({ value, onChange, options, placeholder, className = '', style = {}, align = 'right' }) {
+export default function CustomSelect({ value, onChange, options, placeholder, className = '', style = {} }) {
   const [open, setOpen] = useState(false)
+  const [filter, setFilter] = useState('')
   const ref = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false)
+        setFilter('')
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus()
+    }
+    if (!open) setFilter('')
+  }, [open])
+
+  const filtered = useMemo(() => {
+    if (!filter) return options
+    const q = filter.toLowerCase()
+    return options.filter(o => o.toLowerCase().includes(q))
+  }, [filter, options])
 
   return (
     <div ref={ref} className={`relative ${className}`} style={style}>
@@ -57,25 +75,44 @@ export default function CustomSelect({ value, onChange, options, placeholder, cl
           color: 'var(--text-primary)',
         }}
       >
-        <div className="flex items-center gap-2" style={{ direction: 'ltr' }}>
+        <div className="flex items-center gap-2 min-w-0 flex-1" style={{ direction: 'ltr' }}>
           {value ? (
-            <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-medium" style={getTagStyle(value)}>
+            <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-medium truncate max-w-full" style={getTagStyle(value)}>
               {value}
             </span>
           ) : (
-            <span style={{ color: 'var(--text-muted)' }}>{placeholder}</span>
+            <span className="truncate" style={{ color: 'var(--text-muted)' }}>{placeholder}</span>
           )}
         </div>
         <ChevronDown size={14} style={{
           color: 'var(--text-muted)',
           transform: open ? 'rotate(180deg)' : '',
           transition: 'transform 0.2s ease',
+          flexShrink: 0,
         }} />
       </button>
 
       {open && (
         <div className="absolute top-full mt-1.5 right-0 left-0 z-50 rounded-xl border shadow-xl overflow-hidden animate-fade-in"
           style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+          <div className="p-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="relative flex items-center">
+              <Search size={14} className="absolute right-3" style={{ color: 'var(--text-muted)' }} />
+              <input
+                ref={inputRef}
+                type="text"
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+                placeholder="Type to search..."
+                className="w-full pr-9 pl-3 py-1.5 rounded-lg text-sm"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+          </div>
           <div className="max-h-56 overflow-y-auto py-1">
             <button
               type="button"
@@ -88,9 +125,9 @@ export default function CustomSelect({ value, onChange, options, placeholder, cl
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
               onMouseLeave={e => { e.currentTarget.style.background = !value ? 'rgba(245,158,11,0.06)' : 'transparent' }}
             >
-              {placeholder}
+              {filtered.length === 0 && filter ? 'No results' : placeholder}
             </button>
-            {options.map(opt => (
+            {filtered.map(opt => (
               <button
                 key={opt}
                 type="button"

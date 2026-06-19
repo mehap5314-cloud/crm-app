@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, ArrowLeft, AlertTriangle } from 'lucide-react'
 import CustomSelect from './CustomSelect'
+import CustomDatePicker from './CustomDatePicker'
 
 const BRANCHES = [
   'City 1', 'City 2', 'City 3', 'City 4', 'Elmerghany',
@@ -189,6 +190,12 @@ export default function IssueForm({ initialData }) {
                 rows={3}
                 className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
                 style={{background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)'}}
+              />
+            ) : field.type === 'date' ? (
+              <CustomDatePicker
+                value={form[field.key] || ''}
+                onChange={(v) => handleChange(field.key, v)}
+                placeholder={field.label}
               />
             ) : field.type === 'select' ? (
               <CustomSelect
