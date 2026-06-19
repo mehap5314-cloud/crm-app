@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Save, ArrowLeft, AlertTriangle } from 'lucide-react'
 import CustomSelect from './CustomSelect'
 import CustomDatePicker from './CustomDatePicker'
+import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
 
 const BRANCHES = [
   'City 1', 'City 2', 'City 3', 'City 4', 'Elmerghany',
@@ -125,6 +126,10 @@ export default function IssueForm({ initialData }) {
       setLoading(false)
     }
   }
+
+  useKeyboardShortcuts({
+    save: () => { if (!loading) handleSubmit(new Event('submit')) },
+  })
 
   return (
     <form onSubmit={handleSubmit}>

@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getAllIssues, updateIssue } from '@/lib/googleSheets'
+import { getAllIssues, updateIssue, logActivity } from '@/lib/googleSheets'
 import { invalidateCache } from '@/lib/cache'
 import { NextResponse } from 'next/server'
 
@@ -26,6 +26,12 @@ export async function PATCH(req) {
     }
 
     invalidateCache()
+    logActivity({
+      Timestamp: new Date().toISOString(),
+      User: `${session.user.name || ''} (${session.user.email})`,
+      Action: 'Bulk updated issues',
+      Details: `Updated ${updated} issues with: ${JSON.stringify(updates)}`,
+    })
     return NextResponse.json({ success: true, updated })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

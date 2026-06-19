@@ -6,6 +6,22 @@ import { useSession } from 'next-auth/react'
 import { Edit, Trash2, Search, ChevronDown, ChevronUp, Filter, Calendar, CheckSquare, Square, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import CustomSelect from './CustomSelect'
 
+function getSLADays(issue) {
+  if (issue['Status'] !== 'Pending' && issue['Status'] !== 'Pending 48H') return null
+  const start = issue['Start Call']
+  if (!start) return null
+  const diff = (new Date() - new Date(start)) / (1000 * 60 * 60 * 24)
+  return Math.floor(diff)
+}
+
+function getSLAStyle(issue) {
+  const days = getSLADays(issue)
+  if (days === null) return null
+  if (days <= 1) return { bg: 'rgba(16,185,129,0.12)', color: '#34d399', label: `${days}d` }
+  if (days <= 2) return { bg: 'rgba(245,158,11,0.12)', color: '#fbbf24', label: `${days}d` }
+  return { bg: 'rgba(239,68,68,0.12)', color: '#f87171', label: `${days}d` }
+}
+
 const STATUS_STYLES = {
   'Closed': { background: 'rgba(16,185,129,0.12)', color: '#34d399' },
   'Pending': { background: 'rgba(249,115,22,0.12)', color: '#fb923c' },
@@ -283,10 +299,21 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                       </span>
                     </td>
                     <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)}>
-                      <span className="inline-block px-2 py-1 rounded-lg text-xs font-medium"
-                        style={STATUS_STYLES[issue['Status']] || { background: 'rgba(100,116,139,0.12)', color: '#94a3b8' }}>
-                        {issue['Status'] || 'Pending'}
-                      </span>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="inline-block px-2 py-1 rounded-lg text-xs font-medium"
+                          style={STATUS_STYLES[issue['Status']] || { background: 'rgba(100,116,139,0.12)', color: '#94a3b8' }}>
+                          {issue['Status'] || 'Pending'}
+                        </span>
+                        {(() => {
+                          const sla = getSLAStyle(issue)
+                          if (!sla) return null
+                          return (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono font-bold" style={{ background: sla.bg, color: sla.color }}>
+                              {sla.label}
+                            </span>
+                          )
+                        })()}
+                      </div>
                     </td>
                     <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Branch'] || '-'}</td>
                     <td className="px-3 py-3.5 text-right" onClick={() => router.push(`/dashboard/${issue.id}`)} style={{ color: 'var(--text-secondary)' }}>{issue['Start Call'] || '-'}</td>

@@ -108,6 +108,42 @@ function StatusDonut({ issues }) {
   )
 }
 
+function PerformanceChart({ data }) {
+  const maxTotal = Math.max(...data.map(d => d.total), 1)
+  return (
+    <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'rgba(52,211,153,0.1)' }}>
+          <Users size={17} style={{ color: '#34d399' }} />
+        </div>
+        <h3 className="text-sm font-heading font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Employee Performance</h3>
+      </div>
+      <div className="space-y-4">
+        {data.slice(0, 10).map((emp, i) => (
+          <div key={i}>
+            <div className="flex justify-between text-xs mb-1.5">
+              <span style={{ color: 'var(--text-primary)' }} className="truncate max-w-[160px]">{emp.name}</span>
+              <span style={{ color: 'var(--text-muted)' }} className="font-mono">{emp.total} · {emp.closed} closed</span>
+            </div>
+            <div className="flex gap-1 h-3 rounded-full overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
+              {emp.closed > 0 && <div className="h-full transition-all duration-1000" style={{ width: `${(emp.closed / maxTotal) * 100}%`, background: '#34d399' }} />}
+              {emp.escalated > 0 && <div className="h-full transition-all duration-1000" style={{ width: `${(emp.escalated / maxTotal) * 100}%`, background: '#f87171' }} />}
+              {emp.pending > 0 && <div className="h-full transition-all duration-1000" style={{ width: `${(emp.pending / maxTotal) * 100}%`, background: '#fb923c' }} />}
+              {emp.pending48h > 0 && <div className="h-full transition-all duration-1000" style={{ width: `${(emp.pending48h / maxTotal) * 100}%`, background: '#fbbf24' }} />}
+            </div>
+            <div className="flex gap-3 mt-1">
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#34d399' }} />{emp.closed}</span>
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#fb923c' }} />{emp.pending}</span>
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#fbbf24' }} />{emp.pending48h}</span>
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#f87171' }} />{emp.escalated}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function MonthlyTrend({ issues, color }) {
   const months = {}
   issues.forEach(i => {
@@ -154,6 +190,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [performance, setPerformance] = useState([])
 
   async function fetchIssues() {
     try {
@@ -170,9 +207,19 @@ export default function Analytics() {
     }
   }
 
+  async function fetchPerformance() {
+    try {
+      const res = await fetch('/api/sheets/performance')
+      if (res.ok) {
+        const data = await res.json()
+        setPerformance(Array.isArray(data) ? data : [])
+      }
+    } catch {}
+  }
+
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
-    if (status === 'authenticated') fetchIssues()
+    if (status === 'authenticated') { fetchIssues(); fetchPerformance() }
   }, [status, router])
 
   if (status === 'loading' || status === 'unauthenticated') return null
@@ -248,7 +295,7 @@ export default function Analytics() {
                   Comprehensive customer issue analysis
                 </p>
               </div>
-              <button onClick={fetchIssues}
+              <button onClick={() => { fetchIssues(); fetchPerformance() }}
                 className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
                 style={{ color: 'var(--text-secondary)' }}>
                 <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
@@ -310,7 +357,7 @@ export default function Analytics() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <BarChartCard title="Handled By" data={handledByStats} color="#34d399" icon={Users} maxBars={10} />
+                  <PerformanceChart data={performance} />
                   <BarChartCard title="Complaints Destination" data={complaintDestStats} color="#818cf8" icon={Target} maxBars={10} />
                 </div>
 

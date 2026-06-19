@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
-import { ArrowLeft, Edit, Trash2, AlertCircle, HeadphonesIcon, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, AlertCircle, HeadphonesIcon, Image as ImageIcon, Clock } from 'lucide-react'
 
 function ImageDisplay({ issue }) {
   const note = issue['Note'] || ''
@@ -52,11 +52,13 @@ export default function IssueDetail() {
   const [issue, setIssue] = useState(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activity, setActivity] = useState([])
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
     if (status !== 'authenticated') return
     fetch(`/api/sheets/${params.id}`).then(r => r.json()).then(d => { setIssue(d); setLoading(false) }).catch(() => setLoading(false))
+    fetch(`/api/activity?issueId=${params.id}`).then(r => r.json()).then(d => setActivity(Array.isArray(d) ? d : [])).catch(() => {})
   }, [status, params.id, router])
 
   if (status === 'loading' || status === 'unauthenticated') return null
@@ -125,6 +127,33 @@ export default function IssueDetail() {
               </div>
 
               <ImageDisplay issue={issue} />
+
+              {activity.length > 0 && (
+                <div className="mt-8 rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-color)' }}>
+                  <div className="p-5" style={{ background: 'var(--bg-card)' }}>
+                    <div className="flex items-center gap-2 mb-5">
+                      <Clock size={16} style={{ color: 'var(--accent)' }} />
+                      <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>Activity Log</span>
+                    </div>
+                    <div className="space-y-0">
+                      {activity.map((entry, i) => (
+                        <div key={i} className="flex gap-4 py-3 border-t first:border-t-0" style={{ borderColor: 'var(--border-color)' }}>
+                          <div className="shrink-0 flex flex-col items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)' }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{entry.Action}</p>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                              {entry.User} &middot; {entry.Timestamp ? new Date(entry.Timestamp).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh' }) : ''}
+                            </p>
+                            {entry.Details && <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{entry.Details}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </main>

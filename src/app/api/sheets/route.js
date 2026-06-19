@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getIssuesPage, getSearchIssues, getTotalCountAll, getAllIssues } from '@/lib/googleSheets'
+import { getIssuesPage, getSearchIssues, getTotalCountAll, getAllIssues, createIssue, logActivity } from '@/lib/googleSheets'
 import { getFromCache, setCache, invalidateCache } from '@/lib/cache'
 import { NextResponse } from 'next/server'
 
@@ -65,6 +65,13 @@ export async function POST(req) {
     const data = await req.json()
     await createIssue(data)
     invalidateCache()
+    logActivity({
+      Timestamp: new Date().toISOString(),
+      User: `${session.user.name || ''} (${session.user.email})`,
+      Action: 'Created issue',
+      IssueTicket: data['Ticket'] || '',
+      Details: `Customer: ${data['Customer Name'] || ''}, Branch: ${data['Branch'] || ''}`,
+    })
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

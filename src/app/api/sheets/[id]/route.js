@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getIssueById, updateIssue, deleteIssue } from '@/lib/googleSheets'
+import { getIssueById, updateIssue, deleteIssue, logActivity } from '@/lib/googleSheets'
 import { invalidateCache } from '@/lib/cache'
 import { NextResponse } from 'next/server'
 
@@ -33,9 +33,19 @@ export async function PUT(req, { params }) {
 
   try {
     const data = await req.json()
+    const old = await getIssueById(params.id)
     await updateIssue(params.id, data)
     invalidateCache()
     delete issueCache.data[params.id]; delete issueCache.expiry[params.id]
+    const changed = Object.keys(data).filter(k => data[k] !== (old ? old[k] : '')).join(', ')
+    logActivity({
+      Timestamp: new Date().toISOString(),
+      User: `${session.user.name || ''} (${session.user.email})`,
+      Action: 'Updated issue',
+      IssueId: params.id,
+      IssueTicket: old?.['Ticket'] || data['Ticket'] || '',
+      Details: `Changed: ${changed || 'N/A'}`,
+    })
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
@@ -52,9 +62,18 @@ export async function DELETE(req, { params }) {
   }
 
   try {
+    const old = await getIssueById(params.id)
     await deleteIssue(params.id)
     invalidateCache()
     delete issueCache.data[params.id]; delete issueCache.expiry[params.id]
+    logActivity({
+      Timestamp: new Date().toISOString(),
+      User: `${session.user.name || ''} (${session.user.email})`,
+      Action: 'Deleted issue',
+      IssueId: params.id,
+      IssueTicket: old?.['Ticket'] || '',
+      Details: `Customer: ${old?.['Customer Name'] || 'N/A'}`,
+    })
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

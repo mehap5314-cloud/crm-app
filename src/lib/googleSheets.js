@@ -13,6 +13,8 @@ const COLUMNS = [
   'Ticket', 'Duplicate', 'Note',
 ]
 
+const ACTIVITY_COLUMNS = ['Timestamp', 'User', 'Action', 'IssueId', 'IssueTicket', 'Details']
+
 let _auth = null
 
 function getAuth() {
@@ -190,9 +192,163 @@ export async function deleteIssue(id) {
   const parts = issueId.split('-')
   const sheetName = parts.length > 1 ? parts[0] : SHEET_NAME
   const rowIndex = parseInt(parts[parts.length - 1])
-  await sheets.spreadsheets.values.clear({
+
+  const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
     range: `${sheetName}!A${rowIndex}:T${rowIndex}`,
+  })
+  const row = res.data.values?.[0]
+  if (!row) return { success: true }
+
+  const now = new Date().toISOString().split('T')[0]
+  const noteIdx = COLUMNS.indexOf('Note')
+  if (noteIdx >= 0) {
+    const existingNote = row[noteIdx] || ''
+    row[noteIdx] = `[Trashed: ${now} from ${sheetName}] ${existingNote}`.trim()
+  }
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: `Trash!A:T`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [row] },
+  })
+
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: SHEET_ID,
+    range: `Trash!A${rowIndex}:T${rowIndex}`,
+  })
+  return { success: true }
+}
+
+export async function getPerformance() {
+  try {
+    const all = await getAllIssues()
+    const map = {}
+    for (const issue of all) {
+      const name = issue['Handled by'] || 'Unassigned'
+      if (!map[name]) map[name] = { name, total: 0, closed: 0, pending: 0, pending48h: 0, escalated: 0 }
+      map[name].total++
+      const s = issue['Status']
+      if (s === 'Closed') map[name].closed++
+      else if (s === 'Pending') map[name].pending++
+      else if (s === 'Pending 48H') map[name].pending48h++
+      else if (s === 'Escalated') map[name].escalated++
+    }
+    return Object.values(map).sort((a, b) => b.total - a.total)
+  } catch { return [] }
+}
+
+export async function getFollowups() {
+  try {
+    const all = await getAllIssues()
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayStr = today.toISOString().split('T')[0]
+    return all.filter(issue => {
+      const fu = issue['Follow up']
+      if (!fu || issue['Status'] === 'Closed') return false
+      const d = new Date(fu)
+      if (isNaN(d.getTime())) return false
+      d.setHours(0, 0, 0, 0)
+      return d <= today
+    }).slice(0, 50)
+  } catch { return [] }
+}
+
+export async function logActivity(entry) {
+  try {
+    const sheets = getSheets()
+    const row = ACTIVITY_COLUMNS.map(col => entry[col] || '')
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: `Activity!A:F`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [row] },
+    })
+  } catch {}
+}
+
+export async function getActivity(issueId) {
+  try {
+    const sheets = getSheets()
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `Activity!A:F`,
+    })
+    const rows = res.data.values || []
+    if (rows.length <= 1) return []
+    const [, ...data] = rows
+    return data.reverse().map((row) => {
+      const obj = {}
+      ACTIVITY_COLUMNS.forEach((col, i) => { obj[col] = row[i] || '' })
+      return obj
+    }).filter(a => a.IssueId === issueId)
+  } catch { return [] }
+}
+
+export async function getTrashIssues() {
+  try {
+    const sheets = getSheets()
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `Trash!A:T`,
+    })
+    const rows = res.data.values || []
+    if (rows.length <= 1) return []
+    const [, ...data] = rows
+    return data.map((row, i) => ({
+      id: `Trash-${i + 2}`,
+      _sheet: 'Trash',
+      ...rowToObject(row),
+    }))
+  } catch { return [] }
+}
+
+export async function restoreIssue(id) {
+  const sheets = getSheets()
+  const issueId = String(id)
+  const rowIndex = parseInt(issueId.split('-').pop())
+  if (isNaN(rowIndex) || rowIndex < 2) return { success: false }
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `Trash!A${rowIndex}:T${rowIndex}`,
+  })
+  const row = res.data.values?.[0]
+  if (!row) return { success: false }
+
+  const noteIdx = COLUMNS.indexOf('Note')
+  let originalSheet = SHEET_NAME
+  if (noteIdx >= 0 && row[noteIdx]) {
+    const match = row[noteIdx].match(/\[Trashed: [^\]]+ from ([^\]]+)\]/)
+    if (match) originalSheet = match[1]
+    row[noteIdx] = row[noteIdx].replace(/\[Trashed: [^\]]+ from [^\]]+\]\s*/, '')
+  }
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: `${originalSheet}!A:T`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [row] },
+  })
+
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: SHEET_ID,
+    range: `Trash!A${rowIndex}:T${rowIndex}`,
+  })
+  return { success: true }
+}
+
+export async function permanentDelete(id) {
+  const sheets = getSheets()
+  const issueId = String(id)
+  const rowIndex = parseInt(issueId.split('-').pop())
+  if (isNaN(rowIndex) || rowIndex < 2) return { success: false }
+
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: SHEET_ID,
+    range: `Trash!A${rowIndex}:T${rowIndex}`,
   })
   return { success: true }
 }
