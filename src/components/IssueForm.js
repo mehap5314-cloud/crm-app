@@ -191,7 +191,7 @@ export default function IssueForm({ initialData }) {
               />
             ) : field.type === 'select' ? (
               <select
-                dir="rtl"
+                dir="ltr"
                 value={form[field.key] || ''}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
