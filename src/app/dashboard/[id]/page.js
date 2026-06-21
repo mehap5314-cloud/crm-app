@@ -63,7 +63,7 @@ export default function IssueDetail() {
       const note = d['Note'] || ''
       const m = note.match(/__EX_END__:(\S+)/)
       if (m) setExceptionEnd(m[1])
-      const r = note.match(/__REF_REASON__:(.+?)(?:__|$)/)
+      const r = note.match(/__REF_REASON__:(.+?)(?=\s*__|$)/)
       if (r) setRefundReason(r[1].trim())
     }).catch(() => setLoading(false))
     fetch(`/api/activity?issueId=${params.id}`).then(r => r.json()).then(d => setActivity(Array.isArray(d) ? d : [])).catch(() => {})

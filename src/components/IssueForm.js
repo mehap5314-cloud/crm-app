@@ -65,7 +65,7 @@ const FIELDS = [
 
 export default function IssueForm({ initialData }) {
   const router = useRouter()
-  const [form, setForm] = useState(initialData || {})
+  const [form, setForm] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [duplicates, setDuplicates] = useState([])
@@ -77,11 +77,14 @@ export default function IssueForm({ initialData }) {
 
   useEffect(() => {
     if (initialData) {
+      setForm(initialData)
       const note = initialData['Note'] || ''
       const m = note.match(/__EX_END__:(\S+)/)
       if (m) setExceptionEnd(m[1])
-      const r = note.match(/__REF_REASON__:(.+?)(?:__|$)/)
+      else setExceptionEnd('')
+      const r = note.match(/__REF_REASON__:(.+?)(?:\s*__|$)/)
       if (r) setRefundReason(r[1].trim())
+      else setRefundReason('')
     }
   }, [initialData])
 
@@ -134,11 +137,11 @@ export default function IssueForm({ initialData }) {
 
       if (refundReason) {
         const note = data['Note'] || ''
-        const cleaned = note.replace(/__REF_REASON__:.*?(?=__|$)/g, '').trim()
+        const cleaned = note.replace(/__REF_REASON__:(.+?)(?=\s*__|$)/g, '').trim()
         data['Note'] = `${cleaned} __REF_REASON__:${refundReason}`.trim()
       } else {
         if (data['Note']) {
-          data['Note'] = data['Note'].replace(/__REF_REASON__:.*?(?=__|$)/g, '').trim()
+          data['Note'] = data['Note'].replace(/__REF_REASON__:(.+?)(?=\s*__|$)/g, '').trim()
         }
       }
 

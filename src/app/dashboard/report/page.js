@@ -29,8 +29,8 @@ export default function Report() {
       const notes = {}
       list.forEach(i => {
         const note = i['Note'] || ''
-        const refReason = note.match(/__REF_REASON__:(.+?)(?:__|$)/)
-        const refNote = note.match(/__REF_NOTE__:(.+?)(?:__|$)/)
+        const refReason = note.match(/__REF_REASON__:(.+?)(?=\s*__|$)/)
+        const refNote = note.match(/__REF_NOTE__:(.+?)(?=\s*__|$)/)
         const val = refNote ? refNote[1].trim() : (refReason ? refReason[1].trim() : '')
         if (val) notes[i.id] = val
       })
@@ -66,7 +66,7 @@ export default function Report() {
     setSavingNote(id)
     try {
       const note = issues.find(i => i.id === id)?.['Note'] || ''
-      const cleaned = note.replace(/__REF_NOTE__:.*?(?=__|$)/g, '').trim()
+      const cleaned = note.replace(/__REF_NOTE__:(.+?)(?=\s*__|$)/g, '').trim()
       const newNote = value ? `${cleaned} __REF_NOTE__:${value}`.trim() : cleaned
       await fetch(`/api/sheets/${id}`, {
         method: 'PUT',
