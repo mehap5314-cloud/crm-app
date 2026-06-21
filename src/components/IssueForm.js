@@ -58,7 +58,7 @@ const FIELDS = [
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
   { key: 'Ticket', label: 'Ticket', type: 'text' },
 
-  { key: 'Follow up', label: 'Follow Up', type: 'date' },
+  { key: 'Follow up', label: 'Follow Up', type: 'multiDate' },
   { key: 'Note', label: 'Note', type: 'textarea' },
 ]
 

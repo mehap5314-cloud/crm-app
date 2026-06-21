@@ -248,10 +248,13 @@ export async function getFollowups() {
     return all.filter(issue => {
       const fu = issue['Follow up']
       if (!fu || issue['Status'] === 'Closed') return false
-      const d = new Date(fu)
-      if (isNaN(d.getTime())) return false
-      d.setHours(0, 0, 0, 0)
-      return d <= today
+      const dates = fu.split(',').map(s => s.trim()).filter(Boolean)
+      return dates.some(d => {
+        const dt = new Date(d)
+        if (isNaN(dt.getTime())) return false
+        dt.setHours(0, 0, 0, 0)
+        return dt <= today
+      })
     }).slice(0, 50)
   } catch { return [] }
 }
