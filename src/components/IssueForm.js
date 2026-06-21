@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { Save, ArrowLeft, AlertTriangle, Plus, X } from 'lucide-react'
 import CustomSelect from './CustomSelect'
 import CustomDatePicker from './CustomDatePicker'
 import MultiDatePicker from './MultiDatePicker'
@@ -49,7 +50,7 @@ const FIELDS = [
   { key: 'Customer Name', label: 'Customer Name', type: 'text' },
   { key: 'Contact Number', label: 'Contact Number', type: 'text' },
   { key: 'Description', label: 'Description', type: 'textarea' },
-  { key: 'Final Conclusion', label: 'Final Conclusion', type: 'textarea' },
+  { key: 'Final Conclusion', label: 'Final Conclusion', type: 'finalConclusion' },
   { key: 'Status', label: 'Status', type: 'select', options: ['Pending', 'Pending 48H', 'Closed', 'Escalated'] },
   { key: 'Handled by', label: 'Handled By', type: 'select', options: HANDLED_BY },
   { key: 'Issue code', label: 'Issue Code', type: 'select', options: ISSUE_CODES },
@@ -65,12 +66,15 @@ const FIELDS = [
 
 export default function IssueForm({ initialData }) {
   const router = useRouter()
+  const { data: session } = useSession()
   const [form, setForm] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [duplicates, setDuplicates] = useState([])
   const [exceptionEnd, setExceptionEnd] = useState('')
   const [refundReason, setRefundReason] = useState('')
+  const [fupText, setFupText] = useState('')
+  const [showFup, setShowFup] = useState(false)
 
   const isEdit = !!initialData
   const issuesCache = useRef(null)
@@ -112,6 +116,21 @@ export default function IssueForm({ initialData }) {
 
   function handleChange(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function addFupEntry() {
+    if (!fupText.trim()) return
+    const today = new Date()
+    const dd = String(today.getDate()).padStart(2, '0')
+    const mm = String(today.getMonth() + 1).padStart(2, '0')
+    const dateStr = `${dd}/${mm}`
+    const user = session?.user?.name || 'Unknown'
+    const existing = form['Final Conclusion'] || ''
+    const entry = `${dateStr} ${fupText.trim()} (${user})`
+    const newVal = existing ? `${existing}\n${entry}` : entry
+    setForm(prev => ({ ...prev, 'Final Conclusion': newVal }))
+    setFupText('')
+    setShowFup(false)
   }
 
   async function handleSubmit(e) {
@@ -262,6 +281,47 @@ export default function IssueForm({ initialData }) {
                   style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                 />
               ) : null
+            ) : field.type === 'finalConclusion' ? (
+              <div>
+                {(form[field.key] || '').split('\n').filter(Boolean).map((line, i) => {
+                  const match = line.match(/^(.*)\(([^)]+)\)$/)
+                  return (
+                    <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
+                      <div className="flex-1 text-sm px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
+                        <span>{match ? match[1].trim() : line}</span>
+                        {match && <span className="font-semibold mr-1" style={{ color: '#f59e0b' }}>({match[2]})</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+                {showFup ? (
+                  <div className="flex items-center gap-1 mt-1">
+                    <input
+                      value={fupText}
+                      onChange={e => setFupText(e.target.value)}
+                      className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                      style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                      placeholder="Write follow-up..."
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && fupText.trim()) { addFupEntry(); e.preventDefault() }
+                        if (e.key === 'Escape') { setShowFup(false); setFupText('') }
+                      }}
+                      autoFocus
+                    />
+                    <button type="button" onClick={addFupEntry} disabled={!fupText.trim()}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>Save</button>
+                    <button type="button" onClick={() => { setShowFup(false); setFupText('') }}
+                      className="px-2 py-1.5 rounded-lg text-xs" style={{ color: 'var(--text-muted)' }}><X size={14} /></button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => setShowFup(true)}
+                    className="flex items-center gap-1 mt-1 px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                    style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+                    <Plus size={14} /> Add entry
+                  </button>
+                )}
+              </div>
             ) : field.type === 'select' ? (
               <CustomSelect
                 value={form[field.key] || ''}
