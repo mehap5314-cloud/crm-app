@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Save, ArrowLeft, AlertTriangle } from 'lucide-react'
 import CustomSelect from './CustomSelect'
 import CustomDatePicker from './CustomDatePicker'
+import MultiDatePicker from './MultiDatePicker'
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
 
 const BRANCHES = [
@@ -39,7 +40,7 @@ const ISSUE_CODES = [
 
 const FIELDS = [
   { key: 'Start Call', label: 'Start Call', type: 'date' },
-  { key: '2nd Call', label: '2nd Call', type: 'date' },
+  { key: '2nd Call', label: '2nd Call', type: 'multiDate' },
   { key: 'Closing Date', label: 'Closing Date', type: 'date' },
   { key: 'Branch', label: 'Branch', type: 'select', options: BRANCHES },
   { key: 'Complaints Destination', label: 'Complaints Destination', type: 'select', options: COMPLAINTS_DEST },
@@ -221,6 +222,11 @@ export default function IssueForm({ initialData }) {
                 value={form[field.key] || ''}
                 onChange={(v) => handleChange(field.key, v)}
                 placeholder={field.label}
+              />
+            ) : field.type === 'multiDate' ? (
+              <MultiDatePicker
+                values={form[field.key] || ''}
+                onChange={(v) => handleChange(field.key, v)}
               />
             ) : field.type === 'exceptionDate' ? (
               <CustomDatePicker
