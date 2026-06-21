@@ -131,29 +131,26 @@ export default function Report() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
-                      <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Customer</th>
                       <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Reason</th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {refundCases.length === 0 ? (
-                      <tr><td colSpan={3} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No refund cases</td></tr>
+                      <tr><td colSpan={2} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No refund cases</td></tr>
                     ) : refundCases.map((r, i) => {
                       const reasonMatch = (r['Note'] || '').match(/__REF_REASON__:(.+?)(?:__|$)/)
                       const reason = reasonMatch ? reasonMatch[1].trim() : r['Issue code'] || '-'
                       return (
                         <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
-                          <td className="px-4 py-2" style={{ color: 'var(--text-primary)' }}>{r['Customer Name'] || '-'}</td>
                           <td className="px-4 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{reason}</td>
-                          <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{r['Amount Refund']}</td>
+                          <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#f87171' }}>{r['Amount Refund']}</td>
                         </tr>
                       )
                     })}
                     <tr style={{ borderTop: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
                       <td className="px-4 py-2 font-semibold" style={{ color: 'var(--text-primary)' }}>Total</td>
-                      <td></td>
-                      <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{refundCases.reduce((s, r) => s + (parseFloat(r['Amount Refund']) || 0), 0)}</td>
+                      <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#f87171' }}>{refundCases.reduce((s, r) => s + (parseFloat(r['Amount Refund']) || 0), 0)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -165,20 +162,15 @@ export default function Report() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
-                      <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Customer</th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Ticket</th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Handled By</th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Status</th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Refund</th>
                     </tr>
                   </thead>
                   <tbody>
                     {brokenCases.length === 0 ? (
-                      <tr><td colSpan={5} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No broken cases</td></tr>
+                      <tr><td colSpan={2} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No broken cases</td></tr>
                     ) : brokenCases.map((r, i) => (
                       <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
-                        <td className="px-4 py-2" style={{ color: 'var(--text-primary)' }}>{r['Customer Name'] || '-'}</td>
-                        <td className="px-4 py-2 text-center font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{r['Ticket'] || '-'}</td>
                         <td className="px-4 py-2 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>{r['Handled by'] || '-'}</td>
                         <td className="px-4 py-2 text-center">
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={
@@ -189,7 +181,6 @@ export default function Report() {
                             {}
                           }>{r['Status']}</span>
                         </td>
-                        <td className="px-4 py-2 text-center font-mono text-xs" style={{ color: r['Amount Refund'] ? '#fbbf24' : 'var(--text-muted)' }}>{r['Amount Refund'] || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
