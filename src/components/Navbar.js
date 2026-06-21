@@ -36,6 +36,7 @@ export default function Navbar({ onMenuClick }) {
                   <span className="text-sm font-medium flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
                     {session.user.name}
                     {session.user.isAdmin && <span className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wider uppercase" style={{background: 'rgba(245,158,11,0.15)', color: '#f59e0b'}}>Admin</span>}
+                    {session.user.isManager && <span className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wider uppercase" style={{background: 'rgba(99,102,241,0.15)', color: '#818cf8'}}>Manager</span>}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{session.user.email}</span>
                 </div>

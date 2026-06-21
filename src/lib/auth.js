@@ -1,4 +1,5 @@
-const ADMIN_EMAILS = ['mehap5314@gmail.com', 'moataz.ramadan@hammer-protection.com']
+const ADMIN_EMAILS = ['mehap5314@gmail.com']
+const MANAGER_EMAILS = ['moataz.ramadan@hammer-protection.com']
 
 export function getAuthOptions() {
   return {
@@ -42,11 +43,13 @@ export function getAuthOptions() {
         const email = profile?.email || token?.email || ''
         if (email) {
           token.isAdmin = ADMIN_EMAILS.includes(email)
+          token.isManager = MANAGER_EMAILS.includes(email)
         }
         return token
       },
       async session({ session, token }) {
         session.user.isAdmin = token.isAdmin || false
+        session.user.isManager = token.isManager || false
         return session
       },
     },

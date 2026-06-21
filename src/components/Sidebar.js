@@ -20,8 +20,9 @@ export default function Sidebar({ open, onClose }) {
   const pathname = usePathname()
   const router = useRouter()
   const isAdmin = session?.user?.isAdmin || false
+  const isManager = session?.user?.isManager || false
 
-  const allLinks = isAdmin ? [...LINKS, ...ADMIN_LINKS] : LINKS
+  const allLinks = (isAdmin || isManager) ? [...LINKS, ...ADMIN_LINKS] : LINKS
 
   const isActive = (href) => {
     if (href === '/dashboard') return pathname === '/dashboard'

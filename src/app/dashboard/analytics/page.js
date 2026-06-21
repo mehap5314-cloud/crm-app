@@ -225,7 +225,8 @@ export default function Analytics() {
   if (status === 'loading' || status === 'unauthenticated') return null
 
   const isAdmin = session?.user?.isAdmin
-  if (!isAdmin) {
+  const isManager = session?.user?.isManager
+  if (!isAdmin && !isManager) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
         <div className="flex items-center gap-3 px-6 py-4 rounded-xl" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
