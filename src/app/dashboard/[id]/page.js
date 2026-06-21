@@ -54,6 +54,7 @@ export default function IssueDetail() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activity, setActivity] = useState([])
   const [exceptionEnd, setExceptionEnd] = useState('')
+  const [refundReason, setRefundReason] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
@@ -62,6 +63,8 @@ export default function IssueDetail() {
       const note = d['Note'] || ''
       const m = note.match(/__EX_END__:(\S+)/)
       if (m) setExceptionEnd(m[1])
+      const r = note.match(/__REF_REASON__:(.+?)(?:__|$)/)
+      if (r) setRefundReason(r[1].trim())
     }).catch(() => setLoading(false))
     fetch(`/api/activity?issueId=${params.id}`).then(r => r.json()).then(d => setActivity(Array.isArray(d) ? d : [])).catch(() => {})
   }, [status, params.id, router])
@@ -128,6 +131,8 @@ export default function IssueDetail() {
                       <div className="text-sm" style={{color: 'var(--text-primary)'}}>
                         {key === 'Exception' && exceptionEnd ? (
                           <span>{issue[key] || 'Yes'} <span className="text-xs mr-1" style={{color: 'var(--text-muted)'}}>(until {exceptionEnd})</span></span>
+                        ) : key === 'Amount Refund' && issue[key] && refundReason ? (
+                          <span>{issue[key]} <span className="text-xs mr-1" style={{color: 'var(--text-muted)'}}>({refundReason})</span></span>
                         ) : (
                           issue[key] || <span style={{ color: 'var(--text-muted)' }}>-</span>
                         )}

@@ -33,7 +33,7 @@ export default function Report() {
   const oldPending = oldCases.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
 
   const refundCases = dayIssues.filter(i => i['Amount Refund'] && i['Amount Refund'].trim() !== '')
-  const brokenCount = dayIssues.filter(i => i['Issue code'] === 'Broken').length
+  const brokenCases = dayIssues.filter(i => i['Issue code'] === 'Broken')
 
   const followUps = issues.filter(i => i['Follow up'] && i['Follow up'].trim() !== '' && (i['Start Call'] || '').startsWith(date))
   const followUpClosed = followUps.filter(i => i['Status'] === 'Closed').length
@@ -131,26 +131,67 @@ export default function Report() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Customer</th>
                       <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Reason</th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Amount</th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Broken</th>
                     </tr>
                   </thead>
                   <tbody>
                     {refundCases.length === 0 ? (
                       <tr><td colSpan={3} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No refund cases</td></tr>
-                    ) : refundCases.map((r, i) => (
-                      <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
-                        <td className="px-4 py-2" style={{ color: 'var(--text-primary)' }}>{r['Issue code'] || '-'}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{r['Amount Refund']}</td>
-                        <td className="px-4 py-2 text-center" style={{ color: 'var(--text-secondary)' }}>{r['Issue code'] === 'Broken' ? '✔' : '-'}</td>
-                      </tr>
-                    ))}
+                    ) : refundCases.map((r, i) => {
+                      const reasonMatch = (r['Note'] || '').match(/__REF_REASON__:(.+?)(?:__|$)/)
+                      const reason = reasonMatch ? reasonMatch[1].trim() : r['Issue code'] || '-'
+                      return (
+                        <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                          <td className="px-4 py-2" style={{ color: 'var(--text-primary)' }}>{r['Customer Name'] || '-'}</td>
+                          <td className="px-4 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{reason}</td>
+                          <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{r['Amount Refund']}</td>
+                        </tr>
+                      )
+                    })}
                     <tr style={{ borderTop: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
                       <td className="px-4 py-2 font-semibold" style={{ color: 'var(--text-primary)' }}>Total</td>
+                      <td></td>
                       <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#fbbf24' }}>{refundCases.reduce((s, r) => s + (parseFloat(r['Amount Refund']) || 0), 0)}</td>
-                      <td className="px-4 py-2 text-center font-semibold" style={{ color: brokenCount > 0 ? '#f87171' : 'var(--text-secondary)' }}>{brokenCount}</td>
                     </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Section 4: Broken Cases */}
+              <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <div className="px-4 py-2.5 text-xs font-semibold tracking-wider" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>Broken Cases ({brokenCases.length})</div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Customer</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Ticket</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Handled By</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Status</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Refund</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {brokenCases.length === 0 ? (
+                      <tr><td colSpan={5} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No broken cases</td></tr>
+                    ) : brokenCases.map((r, i) => (
+                      <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <td className="px-4 py-2" style={{ color: 'var(--text-primary)' }}>{r['Customer Name'] || '-'}</td>
+                        <td className="px-4 py-2 text-center font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{r['Ticket'] || '-'}</td>
+                        <td className="px-4 py-2 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>{r['Handled by'] || '-'}</td>
+                        <td className="px-4 py-2 text-center">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={
+                            r['Status'] === 'Closed' ? {background: 'rgba(16,185,129,0.12)', color: '#34d399'} :
+                            r['Status'] === 'Pending' ? {background: 'rgba(249,115,22,0.12)', color: '#fb923c'} :
+                            r['Status'] === 'Pending 48H' ? {background: 'rgba(245,158,11,0.12)', color: '#fbbf24'} :
+                            r['Status'] === 'Escalated' ? {background: 'rgba(239,68,68,0.12)', color: '#f87171'} :
+                            {}
+                          }>{r['Status']}</span>
+                        </td>
+                        <td className="px-4 py-2 text-center font-mono text-xs" style={{ color: r['Amount Refund'] ? '#fbbf24' : 'var(--text-muted)' }}>{r['Amount Refund'] || '-'}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -186,7 +227,7 @@ export default function Report() {
                       <tr style={{ borderTop: '1px solid var(--border-color)' }}>
                         <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#f87171' }}>Broken Cases</td>
                         {HANDLERS.map(h => {
-                          const v = dayIssues.filter(i => i['Issue code'] === 'Broken' && i['Handled by'] === h).length
+                          const v = brokenCases.filter(i => i['Handled by'] === h).length
                           return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: v > 0 ? '#f87171' : 'var(--text-secondary)' }}>{v || '-'}</td>
                         })}
                       </tr>

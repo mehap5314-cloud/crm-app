@@ -56,6 +56,7 @@ const FIELDS = [
   { key: 'Exception', label: 'Exception', type: 'checkbox' },
   { key: 'Exception End Date', label: 'Exception End Date', type: 'exceptionDate' },
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
+  { key: 'Refund Reason', label: 'Refund Reason', type: 'refundReason' },
   { key: 'Ticket', label: 'Ticket', type: 'text' },
 
   { key: 'Follow up', label: 'Follow Up', type: 'multiDate' },
@@ -69,6 +70,7 @@ export default function IssueForm({ initialData }) {
   const [error, setError] = useState('')
   const [duplicates, setDuplicates] = useState([])
   const [exceptionEnd, setExceptionEnd] = useState('')
+  const [refundReason, setRefundReason] = useState('')
 
   const isEdit = !!initialData
   const issuesCache = useRef(null)
@@ -78,6 +80,8 @@ export default function IssueForm({ initialData }) {
       const note = initialData['Note'] || ''
       const m = note.match(/__EX_END__:(\S+)/)
       if (m) setExceptionEnd(m[1])
+      const r = note.match(/__REF_REASON__:(.+?)(?:__|$)/)
+      if (r) setRefundReason(r[1].trim())
     }
   }, [initialData])
 
@@ -125,6 +129,16 @@ export default function IssueForm({ initialData }) {
       } else {
         if (data['Note']) {
           data['Note'] = data['Note'].replace(/__EX_END__:\S+\s*/g, '').trim()
+        }
+      }
+
+      if (refundReason) {
+        const note = data['Note'] || ''
+        const cleaned = note.replace(/__REF_REASON__:.*?(?=__|$)/g, '').trim()
+        data['Note'] = `${cleaned} __REF_REASON__:${refundReason}`.trim()
+      } else {
+        if (data['Note']) {
+          data['Note'] = data['Note'].replace(/__REF_REASON__:.*?(?=__|$)/g, '').trim()
         }
       }
 
@@ -234,6 +248,17 @@ export default function IssueForm({ initialData }) {
                 onChange={(v) => setExceptionEnd(v)}
                 placeholder="Select end date..."
               />
+            ) : field.type === 'refundReason' ? (
+              <div className={form['Amount Refund']?.trim() ? '' : 'opacity-30 pointer-events-none'}>
+                <textarea
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  rows={2}
+                  placeholder="Write refund reason..."
+                  className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
+              </div>
             ) : field.type === 'select' ? (
               <CustomSelect
                 value={form[field.key] || ''}
