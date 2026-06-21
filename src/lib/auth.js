@@ -1,4 +1,4 @@
-const ADMIN_EMAILS = ['mehap5314@gmail.com']
+const ADMIN_EMAILS = ['mehap5314@gmail.com', 'moataz.ramadan@hammer-protection.com']
 
 export function getAuthOptions() {
   return {

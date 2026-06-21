@@ -52,7 +52,7 @@ export async function PUT(req, { params }) {
   }
 }
 
-const ADMIN_EMAILS = ['mehap5314@gmail.com']
+const ADMIN_EMAILS = ['mehap5314@gmail.com', 'moataz.ramadan@hammer-protection.com']
 
 export async function DELETE(req, { params }) {
   const session = await getServerSession(getAuthOptions())
