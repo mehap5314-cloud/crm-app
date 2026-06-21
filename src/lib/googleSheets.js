@@ -64,7 +64,7 @@ async function getSheetData(sheetName) {
 export async function getAllIssues() {
   const allSheets = [SHEET_NAME, ...EXTRA_SHEETS]
   const results = await Promise.all(allSheets.map(s => getSheetData(s).catch(() => [])))
-  return results.map(sheet => sheet.reverse()).flat()
+  return results.map((sheet, i) => i === 0 ? sheet.reverse() : sheet).flat()
 }
 
 const SEARCH_COLUMNS = ['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Description', 'Branch', 'Mobile Type', 'Sold By', 'Handled by', 'Status']
