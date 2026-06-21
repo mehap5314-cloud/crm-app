@@ -176,7 +176,10 @@ export async function updateIssue(id, data) {
   const parts = issueId.split('-')
   const sheetName = parts.length > 1 ? parts[0] : SHEET_NAME
   const rowIndex = parseInt(parts[parts.length - 1])
-  const row = objectToRow(data)
+  const existing = await getIssueById(id)
+  const merged = existing ? { ...existing, ...data } : data
+  delete merged.id; delete merged._sheet
+  const row = objectToRow(merged)
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
     range: `${sheetName}!A${rowIndex}:T${rowIndex}`,
