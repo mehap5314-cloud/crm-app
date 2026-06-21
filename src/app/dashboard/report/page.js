@@ -16,6 +16,8 @@ export default function Report() {
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [fupInput, setFupInput] = useState({})
+  const [savingFup, setSavingFup] = useState(null)
 
   useEffect(() => {
     if (authStatus === 'unauthenticated') router.push('/')
@@ -29,15 +31,23 @@ export default function Report() {
 
   const dayIssues = issues.filter(i => (i['Start Call'] || '').startsWith(date))
   const newCases = dayIssues.filter(i => i._sheet !== 'old')
-  const oldCases = dayIssues.filter(i => i._sheet === 'old')
+
+  const oldCases = issues.filter(i => {
+    if ((i['Start Call'] || '').startsWith(date)) return false
+    const secondCalls = (i['2nd Call'] || '').split(',').map(s => s.trim()).filter(Boolean)
+    if (secondCalls.includes(date)) return true
+    if ((i['Closing Date'] || '').startsWith(date)) return true
+    return false
+  })
 
   const newClosed = newCases.filter(i => i['Status'] === 'Closed').length
   const newPending = newCases.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
   const oldClosed = oldCases.filter(i => i['Status'] === 'Closed').length
   const oldPending = oldCases.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
 
-  const refundCases = dayIssues.filter(i => i['Amount Refund'] && i['Amount Refund'].trim() !== '')
-  const brokenCases = dayIssues.filter(i => i['Issue code'] === 'Broken')
+  const allTodayCases = [...newCases, ...oldCases]
+  const refundCases = allTodayCases.filter(i => i['Amount Refund'] && i['Amount Refund'].trim() !== '')
+  const brokenCases = allTodayCases.filter(i => i['Issue code'] === 'Broken')
 
   const followUps = issues.filter(i => i['Follow up'] && i['Follow up'].trim() !== '' && (i['Start Call'] || '').startsWith(date))
   const followUpClosed = followUps.filter(i => i['Status'] === 'Closed').length
@@ -49,6 +59,41 @@ export default function Report() {
 
   function handlerFollowUp(handler, statuses) {
     return followUps.filter(i => i['Handled by'] === handler && statuses.includes(i['Status'])).length
+  }
+
+  function getFupHandlers(issue) {
+    const note = issue['Note'] || ''
+    const matches = note.match(/__FUP__:([^:]+?):/g) || []
+    return matches.map(m => m.slice(8, -1))
+  }
+
+  function handlerOldCases(handler) {
+    return oldCases.filter(i => {
+      const fup = getFupHandlers(i)
+      if (fup.length > 0) return fup.some(h => h.toLowerCase() === handler.toLowerCase())
+      return i['Handled by'] === handler
+    }).length
+  }
+
+  async function saveFupEntry(id, text) {
+    setSavingFup(id)
+    try {
+      const issue = issues.find(i => i.id === id)
+      const note = issue?.['Note'] || ''
+      const handler = session?.user?.name || session?.user?.email || 'Unknown'
+      const entry = `__FUP__:${handler}:${text}`
+      const newNote = note ? `${note} ${entry}` : entry
+      const res = await fetch(`/api/sheets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Note: newNote }),
+      })
+      if (res.ok) {
+        setIssues(prev => prev.map(i => i.id === id ? { ...i, Note: newNote } : i))
+        setFupInput(prev => ({ ...prev, [id]: '' }))
+      }
+    } catch {}
+    setSavingFup(null)
   }
 
   if (authStatus === 'loading' || authStatus === 'unauthenticated') return null
@@ -100,7 +145,7 @@ export default function Report() {
                 </div>
                 <div className="rounded-xl border p-4 text-center" style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', borderColor: 'rgba(245,158,11,0.2)' }}>
                   <div className="text-xs font-semibold tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Cases</div>
-                  <div className="text-3xl font-heading font-bold" style={{ color: '#f59e0b' }}>{dayIssues.length}</div>
+                  <div className="text-3xl font-heading font-bold" style={{ color: '#f59e0b' }}>{allTodayCases.length}</div>
                 </div>
               </div>
 
@@ -195,7 +240,92 @@ export default function Report() {
                 </table>
               </div>
 
-              {/* Section 4: Handled By */}
+              {/* Section 5: Old Cases */}
+              {oldCases.length > 0 && (
+              <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <div className="px-4 py-2.5 text-xs font-semibold tracking-wider" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>Old Cases ({oldCases.length})</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ background: 'var(--bg-secondary)' }}>
+                        <th className="px-3 py-2 text-right text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Branch</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Customer</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Contact</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Issue code</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Final Conclusion</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Status</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Handled By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {oldCases.map((r, i) => {
+                        const existingFu = (r['Note'] || '').match(/__FUP__:[^:]+:.*?(?=\s*__|$)/g) || []
+                        return (
+                          <tr key={r.id || i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                            <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{r['Branch'] || '-'}</td>
+                            <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{r['Customer Name'] || '-'}</td>
+                            <td className="px-3 py-2 text-xs text-center whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{r['Contact Number'] || '-'}</td>
+                            <td className="px-3 py-2 text-xs text-center whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{r['Issue code'] || '-'}</td>
+                            <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <span>{r['Final Conclusion'] || '-'}</span>
+                                {!fupInput[r.id] && (
+                                  <button onClick={() => setFupInput(prev => ({ ...prev, [r.id]: '' }))}
+                                    className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold transition-all hover:scale-110"
+                                    style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>+</button>
+                                )}
+                              </div>
+                              {fupInput[r.id] !== undefined && (
+                                <div className="mt-1 flex items-center gap-1">
+                                  <input value={fupInput[r.id]} onChange={e => setFupInput(prev => ({ ...prev, [r.id]: e.target.value }))}
+                                    className="flex-1 px-2 py-1 rounded text-xs border"
+                                    style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                                    placeholder="Write follow-up..."
+                                    onKeyDown={e => { if (e.key === 'Enter' && fupInput[r.id]?.trim()) saveFupEntry(r.id, fupInput[r.id].trim()); if (e.key === 'Escape') setFupInput(prev => { const n = { ...prev }; delete n[r.id]; return n }) }}
+                                    autoFocus />
+                                  <button onClick={() => { if (fupInput[r.id]?.trim()) saveFupEntry(r.id, fupInput[r.id].trim()) }}
+                                    className="px-2 py-1 rounded text-xs font-medium"
+                                    style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
+                                    {savingFup === r.id ? '...' : 'Save'}
+                                  </button>
+                                  <button onClick={() => setFupInput(prev => { const n = { ...prev }; delete n[r.id]; return n })}
+                                    className="px-2 py-1 rounded text-xs" style={{ color: 'var(--text-muted)' }}>x</button>
+                                </div>
+                              )}
+                              {existingFu.length > 0 && (
+                                <div className="mt-1 space-y-0.5">
+                                  {existingFu.map((f, fi) => {
+                                    const parts = f.replace('__FUP__:', '').split(':')
+                                    return (
+                                      <div key={fi} className="text-[10px] flex gap-1" style={{ color: 'var(--text-muted)' }}>
+                                        <span className="font-semibold" style={{ color: '#f59e0b' }}>{parts[0]}:</span>
+                                        <span>{parts.slice(1).join(':')}</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={
+                                r['Status'] === 'Closed' ? {background: 'rgba(16,185,129,0.12)', color: '#34d399'} :
+                                r['Status'] === 'Pending' ? {background: 'rgba(249,115,22,0.12)', color: '#fb923c'} :
+                                r['Status'] === 'Pending 48H' ? {background: 'rgba(245,158,11,0.12)', color: '#fbbf24'} :
+                                r['Status'] === 'Escalated' ? {background: 'rgba(239,68,68,0.12)', color: '#f87171'} :
+                                {}
+                              }>{r['Status']}</span>
+                            </td>
+                            <td className="px-3 py-2 text-xs text-center" style={{ color: 'var(--text-secondary)' }}>{r['Handled by'] || '-'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              )}
+
+              {/* Section 6: Handled By */}
               <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
                 <div className="px-4 py-2.5 text-xs font-semibold tracking-wider" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>HANDLED BY</div>
                 <div className="overflow-x-auto">
@@ -219,8 +349,8 @@ export default function Report() {
                       <tr style={{ borderTop: '1px solid var(--border-color)' }}>
                         <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: '#818cf8' }}>Old Cases</td>
                         {HANDLERS.map(h => {
-                          const v = handlerCases(oldCases, h)
-                          return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: 'var(--text-secondary)' }}>{v || '-'}</td>
+                          const v = handlerOldCases(h)
+                          return <td key={h} className="px-3 py-2 text-center font-mono" style={{ color: v > 0 ? '#818cf8' : 'var(--text-secondary)' }}>{v || '-'}</td>
                         })}
                       </tr>
                       <tr style={{ borderTop: '1px solid var(--border-color)' }}>
