@@ -249,7 +249,7 @@ export default function IssueForm({ initialData }) {
                 placeholder="Select end date..."
               />
             ) : field.type === 'refundReason' ? (
-              <div className={form['Amount Refund']?.trim() ? '' : 'opacity-30 pointer-events-none'}>
+              form['Amount Refund']?.trim() ? (
                 <textarea
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
@@ -258,7 +258,7 @@ export default function IssueForm({ initialData }) {
                   className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
                   style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                 />
-              </div>
+              ) : null
             ) : field.type === 'select' ? (
               <CustomSelect
                 value={form[field.key] || ''}

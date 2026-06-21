@@ -28,8 +28,11 @@ export default function Report() {
       setLoading(false)
       const notes = {}
       list.forEach(i => {
-        const m = (i['Note'] || '').match(/__REF_NOTE__:(.+?)(?:__|$)/)
-        if (m) notes[i.id] = m[1].trim()
+        const note = i['Note'] || ''
+        const refReason = note.match(/__REF_REASON__:(.+?)(?:__|$)/)
+        const refNote = note.match(/__REF_NOTE__:(.+?)(?:__|$)/)
+        const val = refNote ? refNote[1].trim() : (refReason ? refReason[1].trim() : '')
+        if (val) notes[i.id] = val
       })
       setRefundNotes(notes)
     }).catch(() => setLoading(false))
