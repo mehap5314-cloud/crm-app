@@ -178,7 +178,7 @@ export default function Report() {
                             <input
                               defaultValue={refundNotes[r.id] || ''}
                               onBlur={(e) => saveRefundNote(r.id, e.target.value)}
-                              className="w-full max-w-[160px] border rounded-lg px-2 py-1 text-xs transition-all"
+                              className="w-[250px] border rounded-lg px-2 py-1 text-xs transition-all"
                               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                               placeholder="Write reason..."
                             />
