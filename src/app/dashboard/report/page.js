@@ -16,11 +16,23 @@ export default function Report() {
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [refundNotes, setRefundNotes] = useState({})
+  const [savingNote, setSavingNote] = useState(null)
 
   useEffect(() => {
     if (authStatus === 'unauthenticated') router.push('/')
     if (authStatus !== 'authenticated') return
-    fetch('/api/sheets?all=true').then(r => r.json()).then(d => { setIssues(Array.isArray(d.issues) ? d.issues : []); setLoading(false) }).catch(() => setLoading(false))
+    fetch('/api/sheets?all=true').then(r => r.json()).then(d => {
+      const list = Array.isArray(d.issues) ? d.issues : []
+      setIssues(list)
+      setLoading(false)
+      const notes = {}
+      list.forEach(i => {
+        const m = (i['Note'] || '').match(/__REF_NOTE__:(.+?)(?:__|$)/)
+        if (m) notes[i.id] = m[1].trim()
+      })
+      setRefundNotes(notes)
+    }).catch(() => setLoading(false))
   }, [authStatus, router])
 
   const dayIssues = issues.filter(i => (i['Start Call'] || '').startsWith(date))
@@ -45,6 +57,22 @@ export default function Report() {
 
   function handlerFollowUp(handler, statuses) {
     return followUps.filter(i => i['Handled by'] === handler && statuses.includes(i['Status'])).length
+  }
+
+  async function saveRefundNote(id, value) {
+    setSavingNote(id)
+    try {
+      const note = issues.find(i => i.id === id)?.['Note'] || ''
+      const cleaned = note.replace(/__REF_NOTE__:.*?(?=__|$)/g, '').trim()
+      const newNote = value ? `${cleaned} __REF_NOTE__:${value}`.trim() : cleaned
+      await fetch(`/api/sheets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Note: newNote }),
+      })
+      setRefundNotes(prev => ({ ...prev, [id]: value }))
+    } catch {}
+    setSavingNote(null)
   }
 
   if (authStatus === 'loading' || authStatus === 'unauthenticated') return null
@@ -133,24 +161,35 @@ export default function Report() {
                     <tr style={{ background: 'var(--bg-secondary)' }}>
                       <th className="px-4 py-2 text-right text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Reason</th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Amount</th>
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider" style={{ color: 'var(--text-muted)' }}>Notes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {refundCases.length === 0 ? (
-                      <tr><td colSpan={2} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No refund cases</td></tr>
+                      <tr><td colSpan={3} className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>No refund cases</td></tr>
                     ) : refundCases.map((r, i) => {
                       const reasonMatch = (r['Note'] || '').match(/__REF_REASON__:(.+?)(?:__|$)/)
                       const reason = reasonMatch ? reasonMatch[1].trim() : r['Issue code'] || '-'
                       return (
-                        <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <tr key={r.id || i} style={{ borderTop: '1px solid var(--border-color)' }}>
                           <td className="px-4 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{reason}</td>
                           <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#f87171' }}>{r['Amount Refund']}</td>
+                          <td className="px-4 py-2 text-center">
+                            <input
+                              defaultValue={refundNotes[r.id] || ''}
+                              onBlur={(e) => saveRefundNote(r.id, e.target.value)}
+                              className="w-full max-w-[160px] border rounded-lg px-2 py-1 text-xs transition-all"
+                              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                              placeholder="Write reason..."
+                            />
+                          </td>
                         </tr>
                       )
                     })}
                     <tr style={{ borderTop: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
                       <td className="px-4 py-2 font-semibold" style={{ color: 'var(--text-primary)' }}>Total</td>
                       <td className="px-4 py-2 text-center font-mono font-bold" style={{ color: '#f87171' }}>{refundCases.reduce((s, r) => s + (parseFloat(r['Amount Refund']) || 0), 0)}</td>
+                      <td></td>
                     </tr>
                   </tbody>
                 </table>
