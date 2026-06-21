@@ -20,8 +20,7 @@ export async function GET(req) {
 
   if (searchQuery) {
     const all = await getSearchIssues(searchQuery)
-    const issues = all.map(({ Note, ...rest }) => rest)
-    return NextResponse.json({ issues, total: issues.length, page: 1, pageSize: issues.length })
+    return NextResponse.json({ issues: all, total: all.length, page: 1, pageSize: all.length })
   }
 
   if (getAll) {
@@ -30,9 +29,8 @@ export async function GET(req) {
     }
     try {
       const all = await getAllIssues()
-      const clean = all.map(({ Note, ...rest }) => rest)
-      setCache(cacheKey, { data: clean, total: clean.length })
-      return NextResponse.json({ issues: clean, total: clean.length })
+      setCache(cacheKey, { data: all, total: all.length })
+      return NextResponse.json({ issues: all, total: all.length })
     } catch (err) {
       return NextResponse.json({ error: err.message }, { status: 500 })
     }
@@ -47,11 +45,10 @@ export async function GET(req) {
 
   try {
     const all = await getAllIssues()
-    const clean = all.map(({ Note, ...rest }) => rest)
-    setCache(cacheKey, { data: clean, total: clean.length })
+    setCache(cacheKey, { data: all, total: all.length })
     const start = (page - 1) * pageSize
-    const paged = clean.slice(start, start + pageSize)
-    return NextResponse.json({ issues: paged, total: clean.length, page, pageSize })
+    const paged = all.slice(start, start + pageSize)
+    return NextResponse.json({ issues: paged, total: all.length, page, pageSize })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
