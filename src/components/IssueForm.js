@@ -230,7 +230,7 @@ export default function IssueForm({ initialData }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {FIELDS.map((field) => (
-          <div key={field.key} className={field.type === 'textarea' ? 'md:col-span-2 lg:col-span-3' : ''}>
+          <div key={field.key} className={field.type === 'textarea' || field.type === 'finalConclusion' ? 'md:col-span-2 lg:col-span-3' : ''}>
             <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
               {field.label}
             </label>
