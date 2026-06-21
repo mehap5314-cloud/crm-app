@@ -282,20 +282,27 @@ export default function IssueForm({ initialData }) {
                 />
               ) : null
             ) : field.type === 'finalConclusion' ? (
-              <div>
-                {(form[field.key] || '').split('\n').filter(Boolean).map((line, i) => {
-                  const match = line.match(/^(.*)\(([^)]+)\)$/)
-                  return (
-                    <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
-                      <div className="flex-1 text-sm px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
+              <div className="space-y-2">
+                <textarea
+                  value={form[field.key] || ''}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  rows={4}
+                  className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
+                <div className="flex flex-wrap gap-1">
+                  {(form[field.key] || '').split('\n').filter(Boolean).map((line, i) => {
+                    const match = line.match(/^(.*)\(([^)]+)\)$/)
+                    return (
+                      <div key={i} className="text-sm px-3 py-1 rounded-lg" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
                         <span>{match ? match[1].trim() : line}</span>
                         {match && <span className="font-semibold mr-1" style={{ color: '#f59e0b' }}>({match[2]})</span>}
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
                 {showFup ? (
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1">
                     <input
                       value={fupText}
                       onChange={e => setFupText(e.target.value)}
@@ -316,7 +323,7 @@ export default function IssueForm({ initialData }) {
                   </div>
                 ) : (
                   <button type="button" onClick={() => setShowFup(true)}
-                    className="flex items-center gap-1 mt-1 px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                    className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-all"
                     style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
                     <Plus size={14} /> Add entry
                   </button>
