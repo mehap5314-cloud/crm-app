@@ -287,7 +287,7 @@ export default function FeedbackPage() {
             </div>
             )}
             <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-              <style>{`.fb-table td, .fb-table th { padding-top: 80px !important; padding-bottom: 80px !important; }`}</style>
+              <style>{`.fb-table td, .fb-table th { padding-top: 110px !important; padding-bottom: 110px !important; }`}</style>
               <div className="overflow-x-auto" dir="ltr">
                 <table className="w-full text-sm fb-table">
                   <thead>
