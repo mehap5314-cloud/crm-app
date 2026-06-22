@@ -172,9 +172,18 @@ export default function FeedbackPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <input type="date" value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPage(1) }}
-                className="px-3 py-2 rounded-xl text-sm border"
-                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+              <div className="relative">
+                <input type="date" value={dateFilter || ''} onChange={e => { setDateFilter(e.target.value); setPage(1) }}
+                  className="px-3 py-2 rounded-xl text-sm border"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                {dateFilter && (
+                  <button onClick={() => { setDateFilter(''); setPage(1) }}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-xs border"
+                    style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}>
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
               <select value={employeeFilter} onChange={e => { setEmployeeFilter(e.target.value); setUnassignedOnly(false); setPage(1) }}
                 className="px-3 py-2 rounded-xl text-sm border"
                 style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
