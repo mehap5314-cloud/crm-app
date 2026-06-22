@@ -2,10 +2,11 @@
 
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
-import { List, BarChart3, FileText, Trash2, Calendar, X } from 'lucide-react'
+import { List, BarChart3, FileText, Trash2, Calendar, X, Phone } from 'lucide-react'
 
 const LINKS = [
   { href: '/dashboard', label: 'All Issues', icon: List },
+  { href: '/dashboard/feedback', label: 'Feedback', icon: Phone },
 ]
 
 const ADMIN_LINKS = [

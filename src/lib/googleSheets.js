@@ -358,3 +358,37 @@ export async function permanentDelete(id) {
   })
   return { success: true }
 }
+
+const FEEDBACK_COLUMNS = [
+  'Start Call', '2nd Call', '3rd call', 'New sale', 'Branch',
+  'Date', 'Customer', 'Customer/Phone', 'Employee',
+  'Order Lines/Product/Point of Sale Category',
+  'Order Lines/Product/Name', 'Order Lines/Model',
+  'Total', 'وضع المكالمه', 'وضح نسبه الحمايه', 'وضح مقاومه الخدوش',
+  'الاحتفاظ بالاسكرين القديمه', 'رسوم التركيب متغيرة', 'فتره الضمان',
+  'استلم الضمان', 'وضح معلومه المياه والكحول', 'تقييم الموظف',
+  'مشاكل في الاسكرين', 'مشاكل مع الموظفين', 'اخري', 'ملاحظات',
+  'وقت الرد علي المكالمه',
+]
+
+function feedbackRowToObject(row) {
+  const obj = {}
+  FEEDBACK_COLUMNS.forEach((col, i) => { obj[col] = row[i] || '' })
+  return obj
+}
+
+export async function getAllFeedback() {
+  const sheets = getSheets()
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'feedback!A:AA',
+  })
+  const rows = res.data.values || []
+  if (rows.length <= 1) return []
+  const [, ...data] = rows
+  return data.map((row, i) => ({
+    id: `feedback-${i + 2}`,
+    _sheet: 'feedback',
+    ...feedbackRowToObject(row),
+  })).reverse()
+}
