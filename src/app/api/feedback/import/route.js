@@ -35,10 +35,20 @@ export async function POST(req) {
       'وقت الرد علي المكالمه',
     ]
 
+    function normalizeKey(k) { return String(k).replace(/[\s\r\n]+/g, '').trim() }
+
+    const sheetKeys = Object.keys(jsonData[0])
+    const keyMap = {}
+    for (const col of FEEDBACK_COLUMNS) {
+      const n = normalizeKey(col)
+      const match = sheetKeys.find(sk => normalizeKey(sk) === n)
+      keyMap[col] = match || ''
+    }
+
     const rows = jsonData.map(row => {
       const mapped = {}
       for (const col of FEEDBACK_COLUMNS) {
-        mapped[col] = row[col] || row[col.toLowerCase()] || ''
+        mapped[col] = row[keyMap[col]] || row[col] || row[col.toLowerCase()] || ''
       }
       return mapped
     })
