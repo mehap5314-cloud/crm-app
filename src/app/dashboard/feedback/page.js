@@ -291,23 +291,23 @@ export default function FeedbackPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
-                      <th className="px-3 py-2.5 w-10">
+                      <th className="px-3 py-3 w-10">
                         <input type="checkbox" checked={selected.size > 0 && selected.size === paged.length}
                           onChange={toggleSelectAll}
                           className="rounded" style={{ accentColor: '#f59e0b' }} />
                       </th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Assign</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Date</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Customer</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Phone</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Employee</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Branch</th>
-                      <th className="px-3 py-2.5 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Product</th>
-                      <th className="px-3 py-2.5 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Model</th>
-                      <th className="px-3 py-2.5 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Total</th>
-                      <th className="px-3 py-2.5 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Status</th>
-                      <th className="px-3 py-2.5 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Rating</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Notes</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Assign</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Date</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Customer</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Phone</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Employee</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Branch</th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Product</th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Model</th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Total</th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Status</th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Rating</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Notes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -315,12 +315,12 @@ export default function FeedbackPage() {
                       <tr key={f.id || i} style={{ borderTop: '1px solid var(--border-color)' }}
                         onClick={() => openEdit(f)}
                         className="cursor-pointer hover:opacity-80 transition-opacity">
-                        <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
+                        <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
                           <input type="checkbox" checked={selected.has(f.id)}
                             onChange={() => toggleSelect(f.id)}
                             className="rounded" style={{ accentColor: '#f59e0b' }} />
                         </td>
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                        <td className="px-3 py-3 text-xs whitespace-nowrap" onClick={e => e.stopPropagation()}>
                           {f['Start Call'] ? (
                             <span style={{ color: 'var(--text-secondary)' }}>{f['Start Call']}</span>
                           ) : (
@@ -336,15 +336,15 @@ export default function FeedbackPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Date'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Customer'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap font-mono" style={{ color: 'var(--text-secondary)' }}>{f['Customer/Phone'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Employee'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Branch'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-secondary)' }}>{f['Order Lines/Product/Name'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs text-center whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Order Lines/Model'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs text-center font-mono whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Total'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-3 py-3 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Date'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Customer'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs whitespace-nowrap font-mono" style={{ color: 'var(--text-secondary)' }}>{f['Customer/Phone'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Employee'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Branch'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-secondary)' }}>{f['Order Lines/Product/Name'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs text-center whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Order Lines/Model'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs text-center font-mono whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Total'] || '-'}</td>
+                        <td className="px-3 py-3 text-center">
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={
                             f['وضع المكالمه']?.includes('تم الرد') ? statusColors['تم الرد'] :
                             f['وضع المكالمه']?.includes('لم يتم') ? statusColors['لم يتم الرد'] :
@@ -352,8 +352,8 @@ export default function FeedbackPage() {
                             {}
                           }>{f['وضع المكالمه'] || '-'}</span>
                         </td>
-                        <td className="px-3 py-2.5 text-xs text-center font-mono" style={{ color: 'var(--text-secondary)' }}>{f['تقييم الموظف'] || '-'}</td>
-                        <td className="px-3 py-2.5 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-muted)' }}>{f['ملاحظات'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs text-center font-mono" style={{ color: 'var(--text-secondary)' }}>{f['تقييم الموظف'] || '-'}</td>
+                        <td className="px-3 py-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-muted)' }}>{f['ملاحظات'] || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
