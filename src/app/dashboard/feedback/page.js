@@ -58,6 +58,9 @@ export default function FeedbackPage() {
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
   const fileRef = useRef(null)
+  const [selected, setSelected] = useState(new Set())
+  const [batchForm, setBatchForm] = useState({ 'Start Call': '', '2nd Call': '', '3rd call': '', 'New sale': '' })
+  const [batchApplying, setBatchApplying] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
@@ -129,6 +132,42 @@ export default function FeedbackPage() {
       }
     } catch {}
     setAssigning(null)
+  }
+
+  function toggleSelect(id) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === paged.length) { setSelected(new Set()); return }
+    setSelected(new Set(paged.map(f => f.id)))
+  }
+
+  async function applyBatch() {
+    const updates = {}
+    for (const key of ['Start Call', '2nd Call', '3rd call', 'New sale']) {
+      if (batchForm[key]) updates[key] = batchForm[key]
+    }
+    if (Object.keys(updates).length === 0) return
+    setBatchApplying(true)
+    try {
+      await Promise.all([...selected].map(id =>
+        fetch('/api/feedback', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...updates })
+        })
+      ))
+      const d = await fetch('/api/feedback').then(r => r.json())
+      setFeedback(Array.isArray(d.feedback) ? d.feedback : [])
+      setSelected(new Set())
+      setBatchForm({ 'Start Call': '', '2nd Call': '', '3rd call': '', 'New sale': '' })
+    } catch {}
+    setBatchApplying(false)
   }
 
   async function handleImport(file) {
@@ -224,11 +263,39 @@ export default function FeedbackPage() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-24 text-sm" style={{ color: 'var(--text-muted)' }}>No feedback records found</div>
           ) : (
+            <>
+            {selected.size > 0 && (
+              <div className="mb-4 p-4 rounded-xl border flex items-center gap-3 flex-wrap" style={{ background: 'rgba(245,158,11,0.05)', borderColor: 'rgba(245,158,11,0.2)' }}>
+                <span className="text-sm font-medium" style={{ color: '#f59e0b' }}>{selected.size} selected</span>
+                {['Start Call','2nd Call','3rd call','New sale'].map(key => (
+                  <select key={key} value={batchForm[key]} onChange={e => setBatchForm(p => ({ ...p, [key]: e.target.value }))}
+                    className="px-2 py-1.5 rounded-lg text-xs border"
+                    style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                    <option value="">{key}</option>
+                    {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                ))}
+                <button onClick={applyBatch} disabled={batchApplying}
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', opacity: batchApplying ? 0.6 : 1 }}>
+                  {batchApplying ? 'Applying...' : 'Apply'}
+                </button>
+                <button onClick={() => { setSelected(new Set()); setBatchForm({ 'Start Call': '', '2nd Call': '', '3rd call': '', 'New sale': '' }) }}
+                  className="px-3 py-1.5 rounded-lg text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Cancel
+                </button>
+            </div>
+            )}
             <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
               <div className="overflow-x-auto" dir="ltr">
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th className="px-3 py-2.5 w-10">
+                        <input type="checkbox" checked={selected.size > 0 && selected.size === paged.length}
+                          onChange={toggleSelectAll}
+                          className="rounded" style={{ accentColor: '#f59e0b' }} />
+                      </th>
                       <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Assign</th>
                       <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Date</th>
                       <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Customer</th>
@@ -248,6 +315,11 @@ export default function FeedbackPage() {
                       <tr key={f.id || i} style={{ borderTop: '1px solid var(--border-color)' }}
                         onClick={() => openEdit(f)}
                         className="cursor-pointer hover:opacity-80 transition-opacity">
+                        <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
+                          <input type="checkbox" checked={selected.has(f.id)}
+                            onChange={() => toggleSelect(f.id)}
+                            className="rounded" style={{ accentColor: '#f59e0b' }} />
+                        </td>
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap" onClick={e => e.stopPropagation()}>
                           {f['Start Call'] ? (
                             <span style={{ color: 'var(--text-secondary)' }}>{f['Start Call']}</span>
@@ -303,6 +375,7 @@ export default function FeedbackPage() {
                 </div>
               )}
             </div>
+            </>
           )}
 
           {showForm && (
