@@ -14,10 +14,10 @@ export async function POST(req) {
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
     const bytes = await file.arrayBuffer()
-    const workbook = XLSX.read(bytes, { type: 'array' })
+    const workbook = XLSX.read(bytes, { type: 'array', cellDates: true })
     const sheetName = workbook.SheetNames[0]
     const sheet = workbook.Sheets[sheetName]
-    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false })
 
     if (jsonData.length === 0) {
       return NextResponse.json({ error: 'Sheet is empty' }, { status: 400 })
@@ -48,7 +48,13 @@ export async function POST(req) {
     const rows = jsonData.map(row => {
       const mapped = {}
       for (const col of FEEDBACK_COLUMNS) {
-        mapped[col] = row[keyMap[col]] || row[col] || row[col.toLowerCase()] || ''
+        let val = row[keyMap[col]] || row[col] || row[col.toLowerCase()] || ''
+        if (val instanceof Date) {
+          const d = String(val.getDate()).padStart(2, '0')
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+          val = `${d}-${months[val.getMonth()]}`
+        }
+        mapped[col] = val
       }
       return mapped
     })
