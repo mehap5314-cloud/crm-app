@@ -49,6 +49,10 @@ export default function FeedbackPage() {
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState({ ...defaultForm })
   const [saving, setSaving] = useState(false)
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0])
+  const [employeeFilter, setEmployeeFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 50
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
@@ -59,9 +63,14 @@ export default function FeedbackPage() {
     }).catch(() => setLoading(false))
   }, [status, router])
 
-  const filtered = search ? feedback.filter(f =>
-    Object.values(f).some(v => String(v || '').toLowerCase().includes(search.toLowerCase()))
-  ) : feedback
+  const filtered = feedback.filter(f => {
+    if (dateFilter && f['Date'] !== dateFilter) return false
+    if (employeeFilter && f['Employee'] !== employeeFilter) return false
+    if (search && !Object.values(f).some(v => String(v || '').toLowerCase().includes(search.toLowerCase()))) return false
+    return true
+  })
+  const totalPages = Math.ceil(filtered.length / pageSize)
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   const statusColors = {
     'تم الرد': { bg: 'rgba(16,185,129,0.12)', color: '#34d399' },
@@ -119,10 +128,19 @@ export default function FeedbackPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <input type="date" value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPage(1) }}
+                className="px-3 py-2 rounded-xl text-sm border"
+                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+              <select value={employeeFilter} onChange={e => { setEmployeeFilter(e.target.value); setPage(1) }}
+                className="px-3 py-2 rounded-xl text-sm border"
+                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                <option value="">All Employees</option>
+                {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
               <div className="relative">
                 <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                 <input value={search} onChange={e => setSearch(e.target.value)}
-                  className="w-64 pl-9 pr-3 py-2 rounded-xl text-sm border"
+                  className="w-48 pl-9 pr-3 py-2 rounded-xl text-sm border"
                   style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                   placeholder="Search..." />
               </div>
@@ -158,7 +176,7 @@ export default function FeedbackPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((f, i) => (
+                    {paged.map((f, i) => (
                       <tr key={f.id || i} style={{ borderTop: '1px solid var(--border-color)' }}
                         onClick={() => openEdit(f)}
                         className="cursor-pointer hover:opacity-80 transition-opacity">
@@ -185,6 +203,21 @@ export default function FeedbackPage() {
                   </tbody>
                 </table>
               </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 px-4 py-3 border-t" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-secondary)' }}>
+                  <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+                    className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                    style={page <= 1 ? { color: 'var(--text-muted)', opacity: 0.4 } : { color: '#f59e0b', background: 'rgba(245,158,11,0.1)' }}>
+                    Prev
+                  </button>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{page} / {totalPages}</span>
+                  <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
+                    className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                    style={page >= totalPages ? { color: 'var(--text-muted)', opacity: 0.4 } : { color: '#f59e0b', background: 'rgba(245,158,11,0.1)' }}>
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
