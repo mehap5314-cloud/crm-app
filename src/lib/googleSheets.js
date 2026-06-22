@@ -268,11 +268,34 @@ export async function logActivity(entry) {
     const row = ACTIVITY_COLUMNS.map(col => entry[col] || '')
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: `Activity!A:F`,
+      range: 'Activity!A:F',
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [row] },
     })
-  } catch {}
+    return { success: true }
+  } catch {
+    return { success: false }
+  }
+}
+
+export async function updateFeedback(id, data) {
+  const sheets = getSheets()
+  const rowIndex = parseInt(String(id).split('-').pop())
+  const existingRes = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `feedback!A${rowIndex}:AA${rowIndex}`,
+  })
+  const existingRow = existingRes.data.values?.[0] || []
+  const existing = feedbackRowToObject(existingRow)
+  const merged = { ...existing, ...data }
+  const row = FEEDBACK_COLUMNS.map(col => merged[col] || '')
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SHEET_ID,
+    range: `feedback!A${rowIndex}:AA${rowIndex}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [row] },
+  })
+  return { success: true }
 }
 
 export async function getActivity(issueId) {

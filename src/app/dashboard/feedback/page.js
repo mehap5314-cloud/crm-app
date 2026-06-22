@@ -44,6 +44,7 @@ export default function FeedbackPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [editId, setEditId] = useState(null)
   const [form, setForm] = useState({ ...defaultForm })
   const [saving, setSaving] = useState(false)
 
@@ -70,19 +71,31 @@ export default function FeedbackPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
+      const url = '/api/feedback'
+      const method = editId ? 'PUT' : 'POST'
+      const body = editId ? { id: editId, ...form } : form
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
         setShowForm(false)
+        setEditId(null)
         setForm({ ...defaultForm })
         const d = await fetch('/api/feedback').then(r => r.json())
         setFeedback(Array.isArray(d.feedback) ? d.feedback : [])
       }
     } catch {}
     setSaving(false)
+  }
+
+  function openEdit(item) {
+    setForm({ ...defaultForm, ...item })
+    setEditId(item.id)
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    setShowForm(false)
+    setEditId(null)
+    setForm({ ...defaultForm })
   }
 
   if (status === 'loading' || status === 'unauthenticated') return null
@@ -111,7 +124,7 @@ export default function FeedbackPage() {
                   style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                   placeholder="Search..." />
               </div>
-              <button onClick={() => setShowForm(true)}
+              <button onClick={() => { setForm({ ...defaultForm }); setEditId(null); setShowForm(true) }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
                 style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff' }}>
                 <Plus size={16} /> New
@@ -144,7 +157,9 @@ export default function FeedbackPage() {
                   </thead>
                   <tbody>
                     {filtered.map((f, i) => (
-                      <tr key={f.id || i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                      <tr key={f.id || i} style={{ borderTop: '1px solid var(--border-color)' }}
+                        onClick={() => openEdit(f)}
+                        className="cursor-pointer hover:opacity-80 transition-opacity">
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Date'] || '-'}</td>
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Customer'] || '-'}</td>
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap font-mono" style={{ color: 'var(--text-secondary)' }}>{f['Customer/Phone'] || '-'}</td>
@@ -175,8 +190,8 @@ export default function FeedbackPage() {
             <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 pb-10" style={{ background: 'rgba(0,0,0,0.6)' }}>
               <div className="w-full max-w-3xl rounded-2xl border overflow-y-auto max-h-[90vh]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-                  <h2 className="text-lg font-heading font-bold" style={{ color: 'var(--text-primary)' }}>New Feedback</h2>
-                  <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
+                  <h2 className="text-lg font-heading font-bold" style={{ color: 'var(--text-primary)' }}>{editId ? 'Edit Feedback' : 'New Feedback'}</h2>
+                  <button onClick={closeForm} className="p-1.5 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                   <div>
@@ -227,7 +242,7 @@ export default function FeedbackPage() {
                   </div>
 
                   <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                    <button type="button" onClick={() => setShowForm(false)}
+                    <button type="button" onClick={closeForm}
                       className="px-4 py-2 rounded-xl text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>
                     <button type="submit" disabled={saving}
                       className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
