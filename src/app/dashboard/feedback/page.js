@@ -50,7 +50,7 @@ export default function FeedbackPage() {
   const [form, setForm] = useState({ ...defaultForm })
   const [saving, setSaving] = useState(false)
   const [assigning, setAssigning] = useState(null)
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0])
+  const [dateFilter, setDateFilter] = useState('')
   const [employeeFilter, setEmployeeFilter] = useState('')
   const [unassignedOnly, setUnassignedOnly] = useState(false)
   const [page, setPage] = useState(1)
