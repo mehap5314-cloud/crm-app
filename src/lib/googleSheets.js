@@ -392,3 +392,19 @@ export async function getAllFeedback() {
     ...feedbackRowToObject(row),
   })).reverse()
 }
+
+function feedbackObjectToRow(obj) {
+  return FEEDBACK_COLUMNS.map((col) => obj[col] || '')
+}
+
+export async function createFeedback(data) {
+  const sheets = getSheets()
+  const row = feedbackObjectToRow(data)
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: 'feedback!A:AA',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [row] },
+  })
+  return { success: true }
+}
