@@ -121,7 +121,7 @@ export default function FeedbackPage() {
       const res = await fetch('/api/feedback', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, 'Start Call': employee, 'Employee': employee })
+        body: JSON.stringify({ id, 'Start Call': employee })
       })
       if (res.ok) {
         const d = await fetch('/api/feedback').then(r => r.json())
