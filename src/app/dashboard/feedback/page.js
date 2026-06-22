@@ -298,7 +298,7 @@ export default function FeedbackPage() {
 
           {showForm && (
             <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 pb-10" style={{ background: 'rgba(0,0,0,0.6)' }}>
-              <div className="w-full max-w-3xl rounded-2xl border overflow-y-auto max-h-[90vh]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+              <div className="w-full max-w-6xl rounded-2xl border overflow-y-auto max-h-[90vh]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
                   <h2 className="text-lg font-heading font-bold" style={{ color: 'var(--text-primary)' }}>{editId ? 'Edit Feedback' : 'New Feedback'}</h2>
                   <button onClick={closeForm} className="p-1.5 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
@@ -306,7 +306,7 @@ export default function FeedbackPage() {
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                   <div>
                     <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>CUSTOMER INFO</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {['Start Call','2nd Call','3rd call','New sale','Branch','Date','Customer','Customer/Phone','Employee','Order Lines/Product/Point of Sale Category','Order Lines/Product/Name','Order Lines/Model','Total'].map((key) => (
                         <div key={key} className={key === 'Order Lines/Product/Point of Sale Category' || key === 'Order Lines/Product/Name' ? 'md:col-span-2' : ''}>
                           <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{key}</label>
@@ -327,9 +327,9 @@ export default function FeedbackPage() {
 
                   <div>
                     <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>SURVEY</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {SURVEY_FIELDS.map((field) => (
-                        <div key={field.key} className={field.type === 'textarea' ? 'md:col-span-3' : ''}>
+                        <div key={field.key} className={field.type === 'textarea' ? 'md:col-span-4' : ''}>
                           <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{field.label}</label>
                           {field.type === 'select' ? (
                             <select value={form[field.key]} onChange={e => setForm(p => ({ ...p, [field.key]: e.target.value }))}
