@@ -431,3 +431,15 @@ export async function createFeedback(data) {
   })
   return { success: true }
 }
+
+export async function createFeedbackBatch(rows) {
+  const sheets = getSheets()
+  const values = rows.map(r => feedbackObjectToRow(r))
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: 'feedback!A:AA',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values },
+  })
+  return { success: true, count: rows.length }
+}

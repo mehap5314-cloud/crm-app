@@ -1,11 +1,11 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
-import { MessageSquare, RefreshCw, Search, Plus, X, Save } from 'lucide-react'
+import { MessageSquare, RefreshCw, Search, Plus, X, Save, Upload } from 'lucide-react'
 
 const defaultForm = {
   'Start Call': '', '2nd Call': '', '3rd call': '', 'New sale': '',
@@ -49,10 +49,15 @@ export default function FeedbackPage() {
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState({ ...defaultForm })
   const [saving, setSaving] = useState(false)
+  const [assigning, setAssigning] = useState(null)
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0])
   const [employeeFilter, setEmployeeFilter] = useState('')
+  const [unassignedOnly, setUnassignedOnly] = useState(false)
   const [page, setPage] = useState(1)
   const pageSize = 50
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+  const fileRef = useRef(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
@@ -65,7 +70,8 @@ export default function FeedbackPage() {
 
   const filtered = feedback.filter(f => {
     if (dateFilter && f['Date'] !== dateFilter) return false
-    if (employeeFilter && f['Employee'] !== employeeFilter) return false
+    if (employeeFilter && f['Start Call'] !== employeeFilter) return false
+    if (unassignedOnly && f['Start Call']) return false
     if (search && !Object.values(f).some(v => String(v || '').toLowerCase().includes(search.toLowerCase()))) return false
     return true
   })
@@ -109,6 +115,44 @@ export default function FeedbackPage() {
     setForm({ ...defaultForm })
   }
 
+  async function assignIssue(id, employee) {
+    setAssigning(id)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, 'Start Call': employee, 'Employee': employee })
+      })
+      if (res.ok) {
+        const d = await fetch('/api/feedback').then(r => r.json())
+        setFeedback(Array.isArray(d.feedback) ? d.feedback : [])
+      }
+    } catch {}
+    setAssigning(null)
+  }
+
+  async function handleImport(file) {
+    setImporting(true)
+    setImportMsg('')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/feedback/import', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok) {
+        setImportMsg(`Imported ${data.count} records`)
+        const d = await fetch('/api/feedback').then(r => r.json())
+        setFeedback(Array.isArray(d.feedback) ? d.feedback : [])
+      } else {
+        setImportMsg(`Error: ${data.error}`)
+      }
+    } catch (err) {
+      setImportMsg(`Error: ${err.message}`)
+    }
+    setImporting(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
   if (status === 'loading' || status === 'unauthenticated') return null
 
   return (
@@ -131,12 +175,17 @@ export default function FeedbackPage() {
               <input type="date" value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPage(1) }}
                 className="px-3 py-2 rounded-xl text-sm border"
                 style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
-              <select value={employeeFilter} onChange={e => { setEmployeeFilter(e.target.value); setPage(1) }}
+              <select value={employeeFilter} onChange={e => { setEmployeeFilter(e.target.value); setUnassignedOnly(false); setPage(1) }}
                 className="px-3 py-2 rounded-xl text-sm border"
                 style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
                 <option value="">All Employees</option>
                 {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer px-2 py-1 rounded-lg" style={{ color: 'var(--text-muted)' }}>
+                <input type="checkbox" checked={unassignedOnly} onChange={e => { setUnassignedOnly(e.target.checked); setEmployeeFilter(''); setPage(1) }}
+                  className="rounded" style={{ accentColor: '#f59e0b' }} />
+                Unassigned
+              </label>
               <div className="relative">
                 <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                 <input value={search} onChange={e => setSearch(e.target.value)}
@@ -144,6 +193,15 @@ export default function FeedbackPage() {
                   style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                   placeholder="Search..." />
               </div>
+              <button onClick={() => fileRef.current?.click()} disabled={importing}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+                <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
+              </button>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleImport(f) }} />
+              {importMsg && (
+                <span className="text-xs" style={{ color: importMsg.startsWith('Error') ? '#f87171' : '#34d399' }}>{importMsg}</span>
+              )}
               <button onClick={() => { setForm({ ...defaultForm }); setEditId(null); setShowForm(true) }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
                 style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff' }}>
@@ -162,6 +220,7 @@ export default function FeedbackPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Assign</th>
                       <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Date</th>
                       <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Customer</th>
                       <th className="px-3 py-2.5 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Phone</th>
@@ -180,6 +239,22 @@ export default function FeedbackPage() {
                       <tr key={f.id || i} style={{ borderTop: '1px solid var(--border-color)' }}
                         onClick={() => openEdit(f)}
                         className="cursor-pointer hover:opacity-80 transition-opacity">
+                        <td className="px-3 py-2.5 text-xs whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                          {f['Start Call'] ? (
+                            <span style={{ color: 'var(--text-secondary)' }}>{f['Start Call']}</span>
+                          ) : (
+                            <div style={{ position: 'relative' }}>
+                              <select value="" onChange={e => { if (e.target.value) { assignIssue(f.id, e.target.value); e.target.value = ''; } }}
+                                disabled={assigning === f.id}
+                                className="w-[100px] border rounded px-2 py-1 text-xs"
+                                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                                <option value="">Assign</option>
+                                {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+                              </select>
+                              {assigning === f.id && <span className="text-xs ml-1" style={{ color: '#f59e0b' }}>...</span>}
+                            </div>
+                          )}
+                        </td>
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{f['Date'] || '-'}</td>
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Customer'] || '-'}</td>
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap font-mono" style={{ color: 'var(--text-secondary)' }}>{f['Customer/Phone'] || '-'}</td>
