@@ -18,7 +18,6 @@ const defaultForm = {
   'وضح معلومه المياه والكحول': '', 'تقييم الموظف': '',
   'مشاكل في الاسكرين': '', 'مشاكل مع الموظفين': '', 'اخري': '',
   'ملاحظات': '', 'وقت الرد علي المكالمه': '',
-  '_ratingReason': '', '_ratingEmployee': '',
 }
 
 const EMPLOYEE_NAMES = ['Manar', 'Karima', 'Sohila', 'Amany', 'seif', 'ayman', 'M.saaed', 'Younis', 'Mayada']
@@ -93,22 +92,15 @@ export default function FeedbackPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     const rating = form['تقييم الموظف']
-    if (rating && parseInt(rating) < 4) {
-      if (!form._ratingReason?.trim() || !form._ratingEmployee?.trim()) {
-        alert('برجاء كتابة سبب التقييم المنخفض و اختيار اسم الموظف')
-        return
-      }
+    if (rating && parseInt(rating) < 4 && !form['ملاحظات']?.trim()) {
+      alert('برجاء كتابة السبب في ملاحظات')
+      return
     }
     setSaving(true)
     try {
       const url = '/api/feedback'
       const method = editId ? 'PUT' : 'POST'
       const body = editId ? { id: editId, ...form } : form
-      if (body._ratingReason || body._ratingEmployee) {
-        const clean = body['ملاحظات']?.replace(/\[تقييم منخفض:.*?\]/, '').trim() || ''
-        body['ملاحظات'] = clean + ` [تقييم منخفض: ${body._ratingReason || '-'} | الموظف: ${body._ratingEmployee || '-'}]`
-      }
-      delete body._ratingReason; delete body._ratingEmployee
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
         setShowForm(false)
@@ -122,14 +114,7 @@ export default function FeedbackPage() {
   }
 
   function openEdit(item) {
-    const parsed = { ...defaultForm, ...item }
-    const m = parsed['ملاحظات']?.match(/\[تقييم منخفض:\s*(.*?)\s*\|\s*الموظف:\s*(.*?)\s*\]/)
-    if (m) {
-      parsed._ratingReason = m[1] !== '-' ? m[1] : ''
-      parsed._ratingEmployee = m[2] || ''
-      parsed['ملاحظات'] = parsed['ملاحظات'].replace(/\[تقييم منخفض:.*?\]/, '').trim()
-    }
-    setForm(parsed)
+    setForm({ ...defaultForm, ...item })
     setEditId(item.id)
     setShowForm(true)
   }
@@ -453,23 +438,6 @@ export default function FeedbackPage() {
                                   {v === 'Yes' ? 'Yes' : 'No'}
                                 </button>
                       ))}
-                      {form['تقييم الموظف'] && parseInt(form['تقييم الموظف']) < 4 && (
-                        <div className="md:col-span-4 flex gap-3">
-                          <div className="flex-1">
-                            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>سبب التقييم المنخفض</label>
-                            <textarea value={form._ratingReason || ''} onChange={e => setForm(p => ({ ...p, _ratingReason: e.target.value }))}
-                              rows={1} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>اسم الموظف</label>
-                            <select value={form._ratingEmployee || ''} onChange={e => setForm(p => ({ ...p, _ratingEmployee: e.target.value }))}
-                              className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-                              <option value="">--</option>
-                              {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
-                            </select>
-                          </div>
-                        </div>
-                      )}
                     </div>
                           ) : field.type === 'textarea' ? (
                             <textarea value={form[field.key]} onChange={e => setForm(p => ({ ...p, [field.key]: e.target.value }))}
