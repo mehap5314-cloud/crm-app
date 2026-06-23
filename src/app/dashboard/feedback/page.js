@@ -22,6 +22,8 @@ const defaultForm = {
 
 const EMPLOYEE_NAMES = ['Manar', 'Karima', 'Sohila', 'Amany', 'seif', 'ayman', 'M.saaed', 'Younis', 'Mayada']
 
+const READ_ONLY_FIELDS = ['Branch', 'Date', 'Customer/Phone', 'Employee', 'Order Lines/Product/Point of Sale Category', 'Order Lines/Product/Name', 'Order Lines/Model', 'Total']
+
 const SURVEY_FIELDS = [
   { key: 'وضع المكالمه', label: 'Call Status', type: 'select', options: ['تم الرد', 'لم يتم الرد', 'متابعه في وقت محدد', 'متابعه في وقت آخر', 'رفض التقييم', 'رد و قفل', 'اجنبي', 'الرقم خطاء', 'العميل باع الموبيل', '(السبب) رفض يكمل المكالمه', 'لم يتم توضيح المعلومات', 'تم ارسال المعلومات واتساب'] },
   { key: 'وضح نسبه الحمايه', label: 'Protection Rate', type: 'yesno' },
@@ -392,7 +394,7 @@ export default function FeedbackPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {['Start Call','2nd Call','3rd call','New sale','Branch','Date','Customer','Customer/Phone','Employee','Order Lines/Product/Point of Sale Category','Order Lines/Product/Name','Order Lines/Model','Total'].map((key) => (
                         <div key={key} className={key === 'Order Lines/Product/Point of Sale Category' || key === 'Order Lines/Product/Name' ? 'md:col-span-2' : ''}>
-                          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{key}</label>
+                          <label className="block text-xs font-medium mb-1" style={{ color: READ_ONLY_FIELDS.includes(key) ? 'var(--text-muted)' : 'var(--text-muted)' }}>{key}{READ_ONLY_FIELDS.includes(key) && <span className="ml-1 opacity-50">(view)</span>}</label>
                           {['Start Call','2nd Call','3rd call','New sale'].includes(key) ? (
                             <select value={form[key] || ''} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
                               className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
@@ -401,7 +403,9 @@ export default function FeedbackPage() {
                             </select>
                           ) : (
                           <input value={form[key] || ''} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-                            className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                            readOnly={READ_ONLY_FIELDS.includes(key)}
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                            style={{ background: READ_ONLY_FIELDS.includes(key) ? 'transparent' : 'var(--bg-secondary)', borderColor: READ_ONLY_FIELDS.includes(key) ? 'transparent' : 'var(--border-color)', color: 'var(--text-primary)', cursor: READ_ONLY_FIELDS.includes(key) ? 'default' : 'text' }} />
                           )}
                         </div>
                       ))}
