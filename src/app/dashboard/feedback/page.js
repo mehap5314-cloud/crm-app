@@ -55,6 +55,7 @@ export default function FeedbackPage() {
   const [dateFilter, setDateFilter] = useState('')
   const [employeeFilter, setEmployeeFilter] = useState('')
   const [unassignedOnly, setUnassignedOnly] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 50
   const [importing, setImporting] = useState(false)
@@ -77,6 +78,7 @@ export default function FeedbackPage() {
     if (dateFilter && f['Date'] !== dateFilter) return false
     if (employeeFilter && f['Start Call'] !== employeeFilter) return false
     if (unassignedOnly && f['Start Call']) return false
+    if (statusFilter && f['وضع المكالمه'] !== statusFilter) return false
     if (search && !Object.values(f).some(v => String(v || '').toLowerCase().includes(search.toLowerCase()))) return false
     return true
   })
@@ -235,6 +237,12 @@ export default function FeedbackPage() {
                   className="rounded" style={{ accentColor: '#f59e0b' }} />
                 Unassigned
               </label>
+              <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
+                className="px-3 py-2 rounded-xl text-sm border"
+                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                <option value="">All Status</option>
+                {SURVEY_FIELDS.find(f => f.key === 'وضع المكالمه')?.options?.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
               <div className="relative">
                 <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                 <input value={search} onChange={e => setSearch(e.target.value)}
