@@ -348,7 +348,7 @@ export default function FeedbackPage() {
                         <td className="px-3 text-xs text-center font-mono whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Total'] || '-'}</td>
                         <td className="px-3 text-center">
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={
-                            f['وضع المكالمه']?.includes('تم الرد') ? { background: 'rgba(16,185,129,0.12)', color: '#34d399' } :
+                            f['وضع المكالمه'] === 'تم الرد' ? { background: 'rgba(16,185,129,0.12)', color: '#34d399' } :
                             { background: 'rgba(239,68,68,0.12)', color: '#f87171' }
                           }>{f['وضع المكالمه'] || '-'}</span>
                         </td>
