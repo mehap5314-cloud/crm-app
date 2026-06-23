@@ -18,6 +18,7 @@ const defaultForm = {
   'وضح معلومه المياه والكحول': '', 'تقييم الموظف': '',
   'مشاكل في الاسكرين': '', 'مشاكل مع الموظفين': '', 'اخري': '',
   'ملاحظات': '', 'وقت الرد علي المكالمه': '',
+  '_ratingReason': '', '_ratingEmployee': '',
 }
 
 const EMPLOYEE_NAMES = ['Manar', 'Karima', 'Sohila', 'Amany', 'seif', 'ayman', 'M.saaed', 'Younis', 'Mayada']
@@ -25,19 +26,19 @@ const EMPLOYEE_NAMES = ['Manar', 'Karima', 'Sohila', 'Amany', 'seif', 'ayman', '
 const READ_ONLY_FIELDS = ['Branch', 'Date', 'Customer/Phone', 'Employee', 'Order Lines/Product/Point of Sale Category', 'Order Lines/Product/Name', 'Order Lines/Model', 'Total']
 
 const SURVEY_FIELDS = [
-  { key: 'وضع المكالمه', label: 'Call Status', type: 'select', options: ['تم الرد', 'لم يتم الرد', 'متابعه في وقت محدد', 'متابعه في وقت آخر', 'رفض التقييم', 'رد و قفل', 'اجنبي', 'الرقم خطاء', 'العميل باع الموبيل', '(السبب) رفض يكمل المكالمه', 'لم يتم توضيح المعلومات', 'تم ارسال المعلومات واتساب'] },
-  { key: 'وضح نسبه الحمايه', label: 'Protection Rate', type: 'yesno' },
-  { key: 'وضح مقاومه الخدوش', label: 'Scratch Resistance', type: 'yesno' },
-  { key: 'الاحتفاظ بالاسكرين القديمه', label: 'Old Screen Retained', type: 'yesno' },
-  { key: 'رسوم التركيب متغيرة', label: 'Installation Fee Varies', type: 'yesno' },
-  { key: 'فتره الضمان', label: 'Warranty Period', type: 'yesno' },
-  { key: 'استلم الضمان', label: 'Warranty Received', type: 'yesno' },
-  { key: 'وضح معلومه المياه والكحول', label: 'Water & Alcohol Info', type: 'yesno' },
-  { key: 'تقييم الموظف', label: 'Employee Rating', type: 'select', options: ['1', '2', '3', '4', '5'] },
-  { key: 'مشاكل في الاسكرين', label: 'Screen Issues', type: 'select', options: ['فكت من الحواف', 'فيها هوا', 'تحتها تراب او اي شئ اخر', 'مقاس الاسكرين', 'قشرت', 'ماتريل سيئه (السبب)', 'الاسكرين فيها خطوط', '(السبب) مشكله في البرايفسي'] },
-  { key: 'مشاكل مع الموظفين', label: 'Staff Issues', type: 'select', options: ['(السبب) اسلوب الموظف سي', 'مده التركيب', 'لم يوضح جميع المعلومات', 'وضح معلومه خاطئه (السبب)', 'الموظف يحتاج تدريب (السبب)', 'عدل الاسكرين (اسم الموظف)', 'دفع العميل رسوم تركيب في الضمان', 'لم يتم تفعيل كود الخصم'] },
-  { key: 'اخري', label: 'Other', type: 'select', options: ['الاسكرين انكسرت', 'الموبايل انكسر', 'مشكله في التاتش', 'الاسكرين فيها خدوش', 'غير الاسكرين أكثر من مره في نفس الزياره', 'مشكله في السداد', 'مشاكل اخري تم توضيحها في الملاحظات.', 'لينس تم توضيح كل المعلومات', 'عارف كل المعلومات', 'العميل لديه شكوي', 'العميل عمل ريفائد'] },
-  { key: 'ملاحظات', label: 'Notes', type: 'textarea' },
+  { key: 'وضع المكالمه', label: 'حالة المكالمة', type: 'select', options: ['تم الرد', 'لم يتم الرد', 'متابعه في وقت محدد', 'متابعه في وقت آخر', 'رفض التقييم', 'رد و قفل', 'اجنبي', 'الرقم خطاء', 'العميل باع الموبيل', '(السبب) رفض يكمل المكالمه', 'لم يتم توضيح المعلومات', 'تم ارسال المعلومات واتساب'] },
+  { key: 'وضح نسبه الحمايه', label: 'نسبة الحماية', type: 'yesno' },
+  { key: 'وضح مقاومه الخدوش', label: 'مقاومة الخدوش', type: 'yesno' },
+  { key: 'الاحتفاظ بالاسكرين القديمه', label: 'الاحتفاظ بالاسكرين القديمة', type: 'yesno' },
+  { key: 'رسوم التركيب متغيرة', label: 'رسوم التركيب متغيرة', type: 'yesno' },
+  { key: 'فتره الضمان', label: 'فترة الضمان', type: 'yesno' },
+  { key: 'استلم الضمان', label: 'استلام الضمان', type: 'yesno' },
+  { key: 'وضح معلومه المياه والكحول', label: 'معلومات المياه والكحول', type: 'yesno' },
+  { key: 'تقييم الموظف', label: 'تقييم الموظف', type: 'select', options: ['1', '2', '3', '4', '5'] },
+  { key: 'مشاكل في الاسكرين', label: 'مشاكل في الاسكرين', type: 'select', options: ['فكت من الحواف', 'فيها هوا', 'تحتها تراب او اي شئ اخر', 'مقاس الاسكرين', 'قشرت', 'ماتريل سيئه (السبب)', 'الاسكرين فيها خطوط', '(السبب) مشكله في البرايفسي'] },
+  { key: 'مشاكل مع الموظفين', label: 'مشاكل مع الموظفين', type: 'select', options: ['(السبب) اسلوب الموظف سي', 'مده التركيب', 'لم يوضح جميع المعلومات', 'وضح معلومه خاطئه (السبب)', 'الموظف يحتاج تدريب (السبب)', 'عدل الاسكرين (اسم الموظف)', 'دفع العميل رسوم تركيب في الضمان', 'لم يتم تفعيل كود الخصم'] },
+  { key: 'اخري', label: 'أخرى', type: 'select', options: ['الاسكرين انكسرت', 'الموبايل انكسر', 'مشكله في التاتش', 'الاسكرين فيها خدوش', 'غير الاسكرين أكثر من مره في نفس الزياره', 'مشكله في السداد', 'مشاكل اخري تم توضيحها في الملاحظات.', 'لينس تم توضيح كل المعلومات', 'عارف كل المعلومات', 'العميل لديه شكوي', 'العميل عمل ريفائد'] },
+  { key: 'ملاحظات', label: 'ملاحظات', type: 'textarea' },
 ]
 
 export default function FeedbackPage() {
@@ -96,6 +97,11 @@ export default function FeedbackPage() {
       const url = '/api/feedback'
       const method = editId ? 'PUT' : 'POST'
       const body = editId ? { id: editId, ...form } : form
+      if (body._ratingReason || body._ratingEmployee) {
+        const clean = body['ملاحظات']?.replace(/\[تقييم منخفض:.*?\]/, '').trim() || ''
+        body['ملاحظات'] = clean + ` [تقييم منخفض: ${body._ratingReason || '-'} | الموظف: ${body._ratingEmployee || '-'}]`
+      }
+      delete body._ratingReason; delete body._ratingEmployee
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
         setShowForm(false)
@@ -109,7 +115,14 @@ export default function FeedbackPage() {
   }
 
   function openEdit(item) {
-    setForm({ ...defaultForm, ...item })
+    const parsed = { ...defaultForm, ...item }
+    const m = parsed['ملاحظات']?.match(/\[تقييم منخفض:\s*(.*?)\s*\|\s*الموظف:\s*(.*?)\s*\]/)
+    if (m) {
+      parsed._ratingReason = m[1] !== '-' ? m[1] : ''
+      parsed._ratingEmployee = m[2] || ''
+      parsed['ملاحظات'] = parsed['ملاحظات'].replace(/\[تقييم منخفض:.*?\]/, '').trim()
+    }
+    setForm(parsed)
     setEditId(item.id)
     setShowForm(true)
   }
@@ -413,7 +426,7 @@ export default function FeedbackPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>SURVEY</h3>
+                    <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>بيانات الاستبيان</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {SURVEY_FIELDS.map((field) => (
                         <div key={field.key} className={field.type === 'textarea' ? 'md:col-span-4' : ''}>
@@ -432,8 +445,25 @@ export default function FeedbackPage() {
                                   style={form[field.key] === v ? { background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' } : { background: 'var(--bg-secondary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
                                   {v === 'Yes' ? 'Yes' : 'No'}
                                 </button>
-                              ))}
-                            </div>
+                      ))}
+                      {form['تقييم الموظف'] && parseInt(form['تقييم الموظف']) < 4 && (
+                        <div className="md:col-span-4 flex gap-3">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>سبب التقييم المنخفض</label>
+                            <textarea value={form._ratingReason || ''} onChange={e => setForm(p => ({ ...p, _ratingReason: e.target.value }))}
+                              rows={1} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>اسم الموظف</label>
+                            <select value={form._ratingEmployee || ''} onChange={e => setForm(p => ({ ...p, _ratingEmployee: e.target.value }))}
+                              className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                              <option value="">--</option>
+                              {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                           ) : field.type === 'textarea' ? (
                             <textarea value={form[field.key]} onChange={e => setForm(p => ({ ...p, [field.key]: e.target.value }))}
                               rows={2} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
