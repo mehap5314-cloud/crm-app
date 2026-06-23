@@ -92,6 +92,13 @@ export default function FeedbackPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    const rating = form['تقييم الموظف']
+    if (rating && parseInt(rating) < 4) {
+      if (!form._ratingReason?.trim() || !form._ratingEmployee?.trim()) {
+        alert('برجاء كتابة سبب التقييم المنخفض و اختيار اسم الموظف')
+        return
+      }
+    }
     setSaving(true)
     try {
       const url = '/api/feedback'
