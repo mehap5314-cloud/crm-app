@@ -287,9 +287,9 @@ export default function FeedbackPage() {
                 </button>
             </div>
             )}
-            <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-              <style>{`.fb-table { table-layout: fixed; width: 100%; } .fb-table td, .fb-table th { padding-top: 16px !important; padding-bottom: 16px !important; padding-left: 8px !important; padding-right: 8px !important; word-wrap: break-word; white-space: normal !important; }`}</style>
-              <div className="overflow-hidden" dir="ltr">
+            <div className="rounded-xl border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+              <style>{`.fb-table { width: 100%; } .fb-table td, .fb-table th { padding-top: 16px !important; padding-bottom: 16px !important; padding-left: 8px !important; padding-right: 8px !important; word-wrap: break-word; white-space: normal !important; }`}</style>
+              <div className="overflow-x-auto" dir="ltr">
                 <table className="w-full text-sm fb-table">
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
@@ -309,6 +309,7 @@ export default function FeedbackPage() {
                       <th className="px-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Total</th>
                       <th className="px-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Status</th>
                       <th className="px-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Rating</th>
+                      <th className="px-3 text-center text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)', width: 80 }}>Call</th>
                       <th className="px-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Notes</th>
                     </tr>
                   </thead>
@@ -353,6 +354,9 @@ export default function FeedbackPage() {
                           }>{f['وضع المكالمه'] || '-'}</span>
                         </td>
                         <td className="px-3 text-xs text-center font-mono" style={{ color: 'var(--text-secondary)' }}>{f['تقييم الموظف'] || '-'}</td>
+                        <td className="px-3 text-xs text-center font-mono" style={{ width: 80, color: ['Start Call','2nd Call','3rd call','New sale'].filter(k => f[k]).length === 0 ? '#f87171' : '#f59e0b', fontWeight: 600 }}>
+                          {['Start Call','2nd Call','3rd call','New sale'].filter(k => f[k]).length || 0}
+                        </td>
                         <td className="px-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-muted)' }}>{f['ملاحظات'] || '-'}</td>
                       </tr>
                     ))}
