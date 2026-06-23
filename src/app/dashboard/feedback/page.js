@@ -83,12 +83,6 @@ export default function FeedbackPage() {
   const totalPages = Math.ceil(filtered.length / pageSize)
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
-  const statusColors = {
-    'تم الرد': { bg: 'rgba(16,185,129,0.12)', color: '#34d399' },
-    'لم يتم الرد': { bg: 'rgba(249,115,22,0.12)', color: '#fb923c' },
-    'رفض': { bg: 'rgba(239,68,68,0.12)', color: '#f87171' },
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     const rating = form['تقييم الموظف']
@@ -354,10 +348,8 @@ export default function FeedbackPage() {
                         <td className="px-3 text-xs text-center font-mono whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{f['Total'] || '-'}</td>
                         <td className="px-3 text-center">
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={
-                            f['وضع المكالمه']?.includes('تم الرد') ? statusColors['تم الرد'] :
-                            f['وضع المكالمه']?.includes('لم يتم') ? statusColors['لم يتم الرد'] :
-                            f['وضع المكالمه']?.includes('رفض') || f['وضع المكالمه']?.includes('السبب') ? statusColors['رفض'] :
-                            {}
+                            f['وضع المكالمه']?.includes('تم الرد') ? { background: 'rgba(16,185,129,0.12)', color: '#34d399' } :
+                            { background: 'rgba(239,68,68,0.12)', color: '#f87171' }
                           }>{f['وضع المكالمه'] || '-'}</span>
                         </td>
                         <td className="px-3 text-xs text-center font-mono" style={{ color: 'var(--text-secondary)' }}>{f['تقييم الموظف'] || '-'}</td>
