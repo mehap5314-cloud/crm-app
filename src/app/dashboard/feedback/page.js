@@ -267,6 +267,20 @@ export default function FeedbackPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: 'Total Customers', value: feedback.length, color: '#f59e0b' },
+              { label: 'تم الرد', value: feedback.filter(f => f['وضع المكالمه'] === 'تم الرد').length, color: '#34d399' },
+              { label: 'لم يتم الرد', value: feedback.filter(f => f['وضع المكالمه'] === 'لم يتم الرد').length, color: '#f87171' },
+              { label: 'متابعه في وقت محدد', value: feedback.filter(f => f['وضع المكالمه'] === 'متابعه في وقت محدد').length, color: '#60a5fa' },
+            ].map((card, i) => (
+              <div key={i} className="rounded-xl border p-4 transition-all hover:scale-[1.02]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{card.label}</p>
+                <p className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+
           {loading ? (
             <div className="flex justify-center py-24"><RefreshCw size={32} className="text-amber-500 animate-spin" /></div>
           ) : filtered.length === 0 ? (
