@@ -269,12 +269,14 @@ export default function FeedbackPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { label: 'Total Customers', value: feedback.length, color: '#f59e0b' },
-              { label: 'تم الرد', value: feedback.filter(f => f['وضع المكالمه'] === 'تم الرد').length, color: '#34d399' },
-              { label: 'لم يتم الرد', value: feedback.filter(f => f['وضع المكالمه'] === 'لم يتم الرد').length, color: '#f87171' },
-              { label: 'متابعه في وقت محدد', value: feedback.filter(f => f['وضع المكالمه'] === 'متابعه في وقت محدد').length, color: '#60a5fa' },
+              { label: 'Total Customers', value: feedback.length, color: '#f59e0b', filter: '' },
+              { label: 'تم الرد', value: feedback.filter(f => f['وضع المكالمه'] === 'تم الرد').length, color: '#34d399', filter: 'تم الرد' },
+              { label: 'لم يتم الرد', value: feedback.filter(f => f['وضع المكالمه'] === 'لم يتم الرد').length, color: '#f87171', filter: 'لم يتم الرد' },
+              { label: 'متابعه في وقت محدد', value: feedback.filter(f => f['وضع المكالمه'] === 'متابعه في وقت محدد').length, color: '#60a5fa', filter: 'متابعه في وقت محدد' },
             ].map((card, i) => (
-              <div key={i} className="rounded-xl border p-4 transition-all hover:scale-[1.02]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+              <div key={i} onClick={() => { setStatusFilter(card.filter); setPage(1) }}
+                className="rounded-xl border p-4 transition-all hover:scale-[1.02] cursor-pointer"
+                style={{ background: statusFilter === card.filter ? 'rgba(245,158,11,0.1)' : 'var(--bg-card)', borderColor: statusFilter === card.filter ? 'rgba(245,158,11,0.3)' : 'var(--border-color)' }}>
                 <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{card.label}</p>
                 <p className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</p>
               </div>
