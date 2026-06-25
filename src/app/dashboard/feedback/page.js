@@ -105,16 +105,14 @@ export default function FeedbackPage() {
 
     setSaving(true)
     const payload = { ...form }
+    let notes = payload['ملاحظات'] || ''
+    notes = notes.replace(/\n?DATE : .+/g, '').replace(/\n?TIME : .+/g, '').replace(/\n?EMP : .+/g, '').trim()
     if (form['وضع المكالمه'] === 'متابعه في وقت محدد' && fupDate) {
-      let notes = payload['ملاحظات'] || ''
-      notes = notes.replace(/\s*__FUP_\w+__:\S+/g, '').trim()
-      notes += ` __FUP_DATE__:${fupDate}`
-      if (fupTime) notes += ` __FUP_TIME__:${to12h(fupTime)}`
-      if (fupEmployee) notes += ` __FUP_EMP__:${fupEmployee}`
-      payload['ملاحظات'] = notes
-    } else {
-      payload['ملاحظات'] = (payload['ملاحظات'] || '').replace(/\s*__FUP_\w+__:\S+/g, '').trim()
+      notes += `\nDATE : ${fupDate}`
+      if (fupTime) notes += `\nTIME : ${to12h(fupTime)}`
+      if (fupEmployee) notes += `\nEMP : ${fupEmployee}`
     }
+    payload['ملاحظات'] = notes
     try {
       const url = '/api/feedback'
       const method = editId ? 'PUT' : 'POST'
@@ -136,9 +134,9 @@ export default function FeedbackPage() {
 
   function openEdit(item) {
     const notes = item['ملاحظات'] || ''
-    setFupDate((notes.match(/__FUP_DATE__:(\S+)/) || [])[1] || '')
-    setFupTime((notes.match(/__FUP_TIME__:(\S+)/) || [])[1] || '')
-    setFupEmployee((notes.match(/__FUP_EMP__:(\S+)/) || [])[1] || '')
+    setFupDate((notes.match(/DATE : (\S+)/) || [])[1] || '')
+    setFupTime((notes.match(/TIME : (.+)/) || [])[1] || '')
+    setFupEmployee((notes.match(/EMP : (\S+)/) || [])[1] || '')
     setForm({ ...defaultForm, ...item })
     setEditId(item.id)
     setShowForm(true)
@@ -413,7 +411,10 @@ export default function FeedbackPage() {
                         <td className="px-3 text-xs text-center font-mono" style={{ width: 80, color: ['Start Call','2nd Call','3rd call','New sale'].filter(k => f[k]).length === 0 ? '#f87171' : '#f59e0b', fontWeight: 600 }}>
                           {['Start Call','2nd Call','3rd call','New sale'].filter(k => f[k]).length || 0}
                         </td>
-                        <td className="px-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-muted)' }}>{f['ملاحظات'] || '-'}</td>
+                        <td className="px-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-muted)' }}>
+                          {(f['ملاحظات'] || '').includes('DATE :') ? <span className="inline-block px-1.5 py-0.5 rounded text-xs font-medium mr-1" style={{ background: 'rgba(96,165,250,0.15)', color: '#60a5fa' }}>FUP</span> : null}
+                          {(f['ملاحظات'] || '').replace(/\n?DATE : .+/g, '').replace(/\n?TIME : .+/g, '').replace(/\n?EMP : .+/g, '').trim() || '-'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
