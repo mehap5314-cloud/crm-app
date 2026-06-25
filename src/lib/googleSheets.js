@@ -392,6 +392,7 @@ const FEEDBACK_COLUMNS = [
   'استلم الضمان', 'وضح معلومه المياه والكحول', 'تقييم الموظف',
   'مشاكل في الاسكرين', 'مشاكل مع الموظفين', 'اخري', 'ملاحظات',
   'وقت الرد علي المكالمه',
+  'Created By', 'Modified By',
 ]
 
 function feedbackRowToObject(row) {
@@ -404,7 +405,7 @@ export async function getAllFeedback() {
   const sheets = getSheets()
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AA',
+    range: 'feedback!A:AC',
   })
   const rows = res.data.values || []
   if (rows.length <= 1) return []
