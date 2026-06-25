@@ -283,7 +283,7 @@ export async function updateFeedback(id, data) {
   const rowIndex = parseInt(String(id).split('-').pop())
   const existingRes = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `feedback!A${rowIndex}:AA${rowIndex}`,
+    range: `feedback!A${rowIndex}:AC${rowIndex}`,
   })
   const existingRow = existingRes.data.values?.[0] || []
   const existing = feedbackRowToObject(existingRow)
@@ -291,7 +291,7 @@ export async function updateFeedback(id, data) {
   const row = FEEDBACK_COLUMNS.map(col => merged[col] || '')
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
-    range: `feedback!A${rowIndex}:AA${rowIndex}`,
+    range: `feedback!A${rowIndex}:AC${rowIndex}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
   })
@@ -426,7 +426,7 @@ export async function createFeedback(data) {
   const row = feedbackObjectToRow(data)
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AA',
+    range: 'feedback!A:AC',
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
   })
@@ -438,7 +438,7 @@ export async function createFeedbackBatch(rows) {
   const values = rows.map(r => feedbackObjectToRow(r))
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AA',
+    range: 'feedback!A:AC',
     valueInputOption: 'USER_ENTERED',
     requestBody: { values },
   })
