@@ -95,13 +95,21 @@ export default function FeedbackPage() {
       alert('برجاء كتابة السبب في ملاحظات')
       return
     }
+    function to12h(t) {
+      if (!t) return t
+      const [h, m] = t.split(':').map(Number)
+      const ap = h >= 12 ? 'PM' : 'AM'
+      const h12 = h % 12 || 12
+      return `${h12}:${String(m).padStart(2, '0')} ${ap}`
+    }
+
     setSaving(true)
     const payload = { ...form }
     if (form['وضع المكالمه'] === 'متابعه في وقت محدد' && fupDate) {
       let notes = payload['ملاحظات'] || ''
       notes = notes.replace(/\s*__FUP_\w+__:\S+/g, '').trim()
       notes += ` __FUP_DATE__:${fupDate}`
-      if (fupTime) notes += ` __FUP_TIME__:${fupTime}`
+      if (fupTime) notes += ` __FUP_TIME__:${to12h(fupTime)}`
       if (fupEmployee) notes += ` __FUP_EMP__:${fupEmployee}`
       payload['ملاحظات'] = notes
     } else {
