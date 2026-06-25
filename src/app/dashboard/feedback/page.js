@@ -64,6 +64,9 @@ export default function FeedbackPage() {
   const [selected, setSelected] = useState(new Set())
   const [batchForm, setBatchForm] = useState({ 'Start Call': '', '2nd Call': '', '3rd call': '', 'New sale': '' })
   const [batchApplying, setBatchApplying] = useState(false)
+  const [fupDate, setFupDate] = useState('')
+  const [fupTime, setFupTime] = useState('')
+  const [fupEmployee, setFupEmployee] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
@@ -93,15 +96,29 @@ export default function FeedbackPage() {
       return
     }
     setSaving(true)
+    const payload = { ...form }
+    if (form['وضع المكالمه'] === 'متابعه في وقت محدد' && fupDate) {
+      let notes = payload['ملاحظات'] || ''
+      notes = notes.replace(/\s*__FUP_\w+__:\S+/g, '').trim()
+      notes += ` __FUP_DATE__:${fupDate}`
+      if (fupTime) notes += ` __FUP_TIME__:${fupTime}`
+      if (fupEmployee) notes += ` __FUP_EMP__:${fupEmployee}`
+      payload['ملاحظات'] = notes
+    } else {
+      payload['ملاحظات'] = (payload['ملاحظات'] || '').replace(/\s*__FUP_\w+__:\S+/g, '').trim()
+    }
     try {
       const url = '/api/feedback'
       const method = editId ? 'PUT' : 'POST'
-      const body = editId ? { id: editId, ...form } : form
+      const body = editId ? { id: editId, ...payload } : payload
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
         setShowForm(false)
         setEditId(null)
         setForm({ ...defaultForm })
+        setFupDate('')
+        setFupTime('')
+        setFupEmployee('')
         const d = await fetch('/api/feedback').then(r => r.json())
         setFeedback(Array.isArray(d.feedback) ? d.feedback : [])
       }
@@ -110,6 +127,10 @@ export default function FeedbackPage() {
   }
 
   function openEdit(item) {
+    const notes = item['ملاحظات'] || ''
+    setFupDate((notes.match(/__FUP_DATE__:(\S+)/) || [])[1] || '')
+    setFupTime((notes.match(/__FUP_TIME__:(\S+)/) || [])[1] || '')
+    setFupEmployee((notes.match(/__FUP_EMP__:(\S+)/) || [])[1] || '')
     setForm({ ...defaultForm, ...item })
     setEditId(item.id)
     setShowForm(true)
@@ -119,6 +140,9 @@ export default function FeedbackPage() {
     setShowForm(false)
     setEditId(null)
     setForm({ ...defaultForm })
+    setFupDate('')
+    setFupTime('')
+    setFupEmployee('')
   }
 
   async function assignIssue(id, employee) {
@@ -259,7 +283,7 @@ export default function FeedbackPage() {
               {importMsg && (
                 <span className="text-xs" style={{ color: importMsg.startsWith('Error') ? '#f87171' : '#34d399' }}>{importMsg}</span>
               )}
-              <button onClick={() => { setForm({ ...defaultForm }); setEditId(null); setShowForm(true) }}
+              <button onClick={() => { setForm({ ...defaultForm }); setEditId(null); setShowForm(true); setFupDate(''); setFupTime(''); setFupEmployee('') }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
                 style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff' }}>
                 <Plus size={16} /> New
@@ -436,6 +460,35 @@ export default function FeedbackPage() {
                       ))}
                     </div>
                   </div>
+
+                  {form['وضع المكالمه'] === 'متابعه في وقت محدد' && (
+                    <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(96,165,250,0.2)', background: 'rgba(96,165,250,0.05)' }}>
+                      <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#60a5fa' }}>متابعة في وقت محدد</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>التاريخ</label>
+                          <input type="date" value={fupDate} onChange={e => setFupDate(e.target.value)}
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>الوقت</label>
+                          <input type="time" value={fupTime} onChange={e => setFupTime(e.target.value)}
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>الموظف</label>
+                          <select value={fupEmployee} onChange={e => setFupEmployee(e.target.value)}
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                            <option value="">--</option>
+                            {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>بيانات الاستبيان</h3>
