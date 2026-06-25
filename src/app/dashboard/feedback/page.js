@@ -411,9 +411,13 @@ export default function FeedbackPage() {
                         <td className="px-3 text-xs text-center font-mono" style={{ width: 80, color: ['Start Call','2nd Call','3rd call','New sale'].filter(k => f[k]).length === 0 ? '#f87171' : '#f59e0b', fontWeight: 600 }}>
                           {['Start Call','2nd Call','3rd call','New sale'].filter(k => f[k]).length || 0}
                         </td>
-                        <td className="px-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-muted)' }}>
-                          {(f['ملاحظات'] || '').includes('DATE :') ? <span className="inline-block px-1.5 py-0.5 rounded text-xs font-medium mr-1" style={{ background: 'rgba(96,165,250,0.15)', color: '#60a5fa' }}>FUP</span> : null}
-                          {(f['ملاحظات'] || '').replace(/\n?DATE : .+/g, '').replace(/\n?TIME : .+/g, '').replace(/\n?EMP : .+/g, '').trim() || '-'}
+                        <td className="px-3 text-xs max-w-[220px]" style={{ color: 'var(--text-muted)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                          {(f['ملاحظات'] || '').split('\n').map((line, j) => {
+                            if (line.startsWith('DATE :')) return <span key={j} style={{ color: '#60a5fa', fontWeight: 600 }}>{line}<br /></span>
+                            if (line.startsWith('TIME :')) return <span key={j} style={{ color: '#60a5fa', fontWeight: 600 }}>{line}<br /></span>
+                            if (line.startsWith('EMP :')) return <span key={j} style={{ color: '#60a5fa', fontWeight: 600 }}>{line}<br /></span>
+                            return <span key={j}>{line}<br /></span>
+                          })}
                         </td>
                       </tr>
                     ))}
