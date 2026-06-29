@@ -8,7 +8,7 @@ function now() {
   const d = new Date()
   const [date, time] = d.toLocaleString('en-CA', { timeZone: 'Africa/Cairo' }).split(', ')
   const [y, m, day] = date.split('-')
-  return `${fmt(day)}-${fmt(m)}-${y} ${time}`
+  return `${fmt(day)}-${fmt(m)}-${y} - ${time}`
 }
 
 export async function GET(req) {
