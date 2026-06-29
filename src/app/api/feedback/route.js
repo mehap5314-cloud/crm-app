@@ -27,8 +27,9 @@ export async function POST(req) {
   try {
     const data = await req.json()
     const user = session.user?.email || session.user?.name || 'unknown'
-    await createFeedback({ ...data, 'Created By': user, 'Modified By': user })
-    logActivity({ Timestamp: now(), User: user, Action: 'Create Feedback', Details: `Customer: ${data['Customer'] || 'N/A'}` })
+    const ts = now()
+    await createFeedback({ ...data, 'Created By': user, 'Modified By': user, 'Modified At': ts })
+    logActivity({ Timestamp: ts, User: user, Action: 'Create Feedback', Details: `Customer: ${data['Customer'] || 'N/A'}` })
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
@@ -42,8 +43,9 @@ export async function PUT(req) {
   try {
     const { id, ...data } = await req.json()
     const user = session.user?.email || session.user?.name || 'unknown'
-    await updateFeedback(id, { ...data, 'Modified By': user })
-    logActivity({ Timestamp: now(), User: user, Action: 'Update Feedback', Details: `ID: ${id}` })
+    const ts = now()
+    await updateFeedback(id, { ...data, 'Modified By': user, 'Modified At': ts })
+    logActivity({ Timestamp: ts, User: user, Action: 'Update Feedback', Details: `ID: ${id}` })
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

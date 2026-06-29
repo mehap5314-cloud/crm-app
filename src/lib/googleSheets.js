@@ -283,7 +283,7 @@ export async function updateFeedback(id, data) {
   const rowIndex = parseInt(String(id).split('-').pop())
   const existingRes = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `feedback!A${rowIndex}:AC${rowIndex}`,
+    range: `feedback!A${rowIndex}:AD${rowIndex}`,
   })
   const existingRow = existingRes.data.values?.[0] || []
   const existing = feedbackRowToObject(existingRow)
@@ -291,7 +291,7 @@ export async function updateFeedback(id, data) {
   const row = FEEDBACK_COLUMNS.map(col => merged[col] || '')
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
-    range: `feedback!A${rowIndex}:AC${rowIndex}`,
+    range: `feedback!A${rowIndex}:AD${rowIndex}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
   })
@@ -392,7 +392,7 @@ const FEEDBACK_COLUMNS = [
   'استلم الضمان', 'وضح معلومه المياه والكحول', 'تقييم الموظف',
   'مشاكل في الاسكرين', 'مشاكل مع الموظفين', 'اخري', 'ملاحظات',
   'وقت الرد علي المكالمه',
-  'Created By', 'Modified By',
+  'Created By', 'Modified By', 'Modified At',
 ]
 
 function feedbackRowToObject(row) {
@@ -405,7 +405,7 @@ export async function getAllFeedback() {
   const sheets = getSheets()
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AC',
+    range: 'feedback!A:AD',
   })
   const rows = res.data.values || []
   if (rows.length <= 1) return []
@@ -426,7 +426,7 @@ export async function createFeedback(data) {
   const row = feedbackObjectToRow(data)
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AC',
+    range: 'feedback!A:AD',
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
   })
@@ -438,7 +438,7 @@ export async function createFeedbackBatch(rows) {
   const values = rows.map(r => feedbackObjectToRow(r))
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AC',
+    range: 'feedback!A:AD',
     valueInputOption: 'USER_ENTERED',
     requestBody: { values },
   })
