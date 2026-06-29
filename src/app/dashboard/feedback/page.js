@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
-import { MessageSquare, RefreshCw, Search, Plus, X, Save, Upload } from 'lucide-react'
+import { MessageSquare, RefreshCw, Search, Plus, X, Save, Upload, BarChart3 } from 'lucide-react'
 
 const defaultForm = {
   'Start Call': '', '2nd Call': '', '3rd call': '', 'New sale': '',
@@ -289,6 +289,11 @@ export default function FeedbackPage() {
               {importMsg && (
                 <span className="text-xs" style={{ color: importMsg.startsWith('Error') ? '#f87171' : '#34d399' }}>{importMsg}</span>
               )}
+              <button onClick={() => router.push('/dashboard/feedback/analytics')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border"
+                style={{ borderColor: 'rgba(245,158,11,0.3)', color: '#f59e0b' }}>
+                <BarChart3 size={16} /> Analytics
+              </button>
               <button onClick={() => { setForm({ ...defaultForm }); setEditId(null); setShowForm(true); setFupDate(''); setFupTime(''); setFupEmployee('') }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
                 style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff' }}>

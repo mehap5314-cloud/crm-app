@@ -7,6 +7,7 @@ import { List, BarChart3, FileText, Trash2, Calendar, X, Phone } from 'lucide-re
 const LINKS = [
   { href: '/dashboard', label: 'All Issues', icon: List },
   { href: '/dashboard/feedback', label: 'Feedback', icon: Phone },
+  { href: '/dashboard/feedback/analytics', label: 'FB Analytics', icon: BarChart3 },
 ]
 
 const ADMIN_LINKS = [
