@@ -4,8 +4,11 @@ import { getAllFeedback, createFeedback, updateFeedback, logActivity } from '@/l
 import { NextResponse } from 'next/server'
 
 function now() {
+  const fmt = (n) => String(n).padStart(2, '0')
   const d = new Date()
-  return `${d.getDate()}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+  const [date, time] = d.toLocaleString('en-CA', { timeZone: 'Africa/Cairo' }).split(', ')
+  const [y, m, day] = date.split('-')
+  return `${fmt(day)}-${fmt(m)}-${y} ${time}`
 }
 
 export async function GET(req) {
