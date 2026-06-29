@@ -283,7 +283,7 @@ export async function updateFeedback(id, data) {
   const rowIndex = parseInt(String(id).split('-').pop())
   const existingRes = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `feedback!A${rowIndex}:AD${rowIndex}`,
+    range: `Feedback!A${rowIndex}:AD${rowIndex}`,
   })
   const existingRow = existingRes.data.values?.[0] || []
   const existing = feedbackRowToObject(existingRow)
@@ -291,8 +291,8 @@ export async function updateFeedback(id, data) {
   const row = FEEDBACK_COLUMNS.map(col => merged[col] || '')
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
-    range: `feedback!A${rowIndex}:AD${rowIndex}`,
-    valueInputOption: 'USER_ENTERED',
+    range: `Feedback!A${rowIndex}:AD${rowIndex}`,
+    valueInputOption: 'RAW',
     requestBody: { values: [row] },
   })
   return { success: true }
@@ -405,14 +405,14 @@ export async function getAllFeedback() {
   const sheets = getSheets()
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AD',
+    range: 'Feedback!A:AD',
   })
   const rows = res.data.values || []
   if (rows.length <= 1) return []
   const [, ...data] = rows
   return data.map((row, i) => ({
     id: `feedback-${i + 2}`,
-    _sheet: 'feedback',
+    _sheet: 'Feedback',
     ...feedbackRowToObject(row),
   })).reverse()
 }
@@ -426,8 +426,8 @@ export async function createFeedback(data) {
   const row = feedbackObjectToRow(data)
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AD',
-    valueInputOption: 'USER_ENTERED',
+    range: 'Feedback!A:AD',
+    valueInputOption: 'RAW',
     requestBody: { values: [row] },
   })
   return { success: true }
@@ -438,8 +438,8 @@ export async function createFeedbackBatch(rows) {
   const values = rows.map(r => feedbackObjectToRow(r))
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: 'feedback!A:AD',
-    valueInputOption: 'USER_ENTERED',
+    range: 'Feedback!A:AD',
+    valueInputOption: 'RAW',
     requestBody: { values },
   })
   return { success: true, count: rows.length }

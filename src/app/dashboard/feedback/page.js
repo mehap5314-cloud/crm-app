@@ -18,12 +18,11 @@ const defaultForm = {
   'وضح معلومه المياه والكحول': '', 'تقييم الموظف': '',
   'مشاكل في الاسكرين': '', 'مشاكل مع الموظفين': '', 'اخري': '',
   'ملاحظات': '', 'وقت الرد علي المكالمه': '',
-  'Created By': '', 'Modified By': '', 'Modified At': '',
+  'Modified By': '', 'Modified At': '',
 }
 
 const EMPLOYEE_NAMES = ['Manar', 'Karima', 'Sohila', 'Amany', 'seif', 'ayman', 'M.saaed', 'Younis', 'Mayada']
 
-const READ_ONLY_FIELDS = ['Branch', 'Date', 'Customer/Phone', 'Employee', 'Order Lines/Product/Point of Sale Category', 'Order Lines/Product/Name', 'Order Lines/Model', 'Total', 'Created By', 'Modified By', 'Modified At']
 
 const SURVEY_FIELDS = [
   { key: 'وضع المكالمه', label: 'حالة المكالمة', type: 'select', options: ['تم الرد', 'لم يتم الرد', 'متابعه في وقت محدد', 'متابعه في وقت آخر', 'رفض التقييم', 'رد و قفل', 'اجنبي', 'الرقم خطاء', 'العميل باع الموبيل', '(السبب) رفض يكمل المكالمه', 'لم يتم توضيح المعلومات', 'تم ارسال المعلومات واتساب'] },
@@ -452,28 +451,7 @@ export default function FeedbackPage() {
                   <button onClick={closeForm} className="p-1.5 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                  <div>
-                    <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>CUSTOMER INFO</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {['Start Call','2nd Call','3rd call','New sale','Branch','Date','Customer','Customer/Phone','Employee','Order Lines/Product/Point of Sale Category','Order Lines/Product/Name','Order Lines/Model','Total','Created By','Modified By','Modified At'].map((key) => (
-                        <div key={key} className={key === 'Order Lines/Product/Point of Sale Category' || key === 'Order Lines/Product/Name' ? 'md:col-span-2' : ''}>
-                          <label className="block text-xs font-medium mb-1" style={{ color: READ_ONLY_FIELDS.includes(key) ? 'var(--text-muted)' : 'var(--text-muted)' }}>{key}{READ_ONLY_FIELDS.includes(key) && <span className="ml-1 opacity-50">(view)</span>}</label>
-                          {['Start Call','2nd Call','3rd call','New sale'].includes(key) ? (
-                            <select value={form[key] || ''} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-                              className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-                              <option value="">--</option>
-                              {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
-                            </select>
-                          ) : (
-                          <input value={form[key] || ''} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-                            readOnly={READ_ONLY_FIELDS.includes(key)}
-                            className="w-full border rounded-lg px-3 py-2 text-sm"
-                            style={{ background: READ_ONLY_FIELDS.includes(key) ? 'transparent' : 'var(--bg-secondary)', borderColor: READ_ONLY_FIELDS.includes(key) ? 'transparent' : 'var(--border-color)', color: 'var(--text-primary)', cursor: READ_ONLY_FIELDS.includes(key) ? 'default' : 'text' }} />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+
 
                   {form['وضع المكالمه'] === 'متابعه في وقت محدد' && (
                     <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(96,165,250,0.2)', background: 'rgba(96,165,250,0.05)' }}>
