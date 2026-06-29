@@ -451,7 +451,28 @@ export default function FeedbackPage() {
                   <button onClick={closeForm} className="p-1.5 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-
+                  <div>
+                    <h3 className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#f59e0b' }}>CUSTOMER INFO</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {['Start Call','2nd Call','3rd call','New sale','Branch','Date','Customer','Customer/Phone','Employee','Order Lines/Product/Point of Sale Category','Order Lines/Product/Name','Order Lines/Model','Total','Modified By','Modified At'].map((key) => (
+                        <div key={key} className={key === 'Order Lines/Product/Point of Sale Category' || key === 'Order Lines/Product/Name' ? 'md:col-span-2' : ''}>
+                          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{key}</label>
+                          {['Start Call','2nd Call','3rd call','New sale'].includes(key) ? (
+                            <select value={form[key] || ''} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+                              className="w-full border rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                              <option value="">--</option>
+                              {EMPLOYEE_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                          ) : (
+                          <input value={form[key] || ''} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+                            readOnly={key !== 'Customer'}
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                            style={{ background: key !== 'Customer' ? 'rgba(245,158,11,0.05)' : 'var(--bg-secondary)', borderColor: key !== 'Customer' ? 'rgba(245,158,11,0.1)' : 'var(--border-color)', color: 'var(--text-primary)', cursor: key !== 'Customer' ? 'default' : 'text' }} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
                   {form['وضع المكالمه'] === 'متابعه في وقت محدد' && (
                     <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(96,165,250,0.2)', background: 'rgba(96,165,250,0.05)' }}>
