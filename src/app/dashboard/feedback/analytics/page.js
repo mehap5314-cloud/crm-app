@@ -94,7 +94,7 @@ export default function FeedbackAnalyticsPage() {
       name,
       count: d.count,
       avg: d.ratings.length ? (d.ratings.reduce((a, b) => a + b, 0) / d.ratings.length).toFixed(1) : '—',
-      val: d.ratings.length ? d.ratings.reduce((a, b) => a + b, 0) / d.ratings.length : 0,
+      val: d.count,
     }))
     .sort((a, b) => b.val - a.val)
 
@@ -165,14 +165,14 @@ export default function FeedbackAnalyticsPage() {
               <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'rgba(52,211,153,0.1)' }}>
                 <BarChart3 size={17} style={{ color: '#34d399' }} />
               </div>
-              <h3 className="text-sm font-heading font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Employee Performance</h3>
+              <h3 className="text-sm font-heading font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Calls per Employee</h3>
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={empPerf} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="val" name="Avg Rating" radius={[6, 6, 0, 0]} maxBarSize={36}>
+                <Bar dataKey="val" name="Calls" radius={[6, 6, 0, 0]} maxBarSize={36}>
                   {empPerf.map((_, i) => (
                     <Cell key={i} fill={['#34d399','#60a5fa','#fbbf24','#a78bfa','#fb923c','#f87171'][i % 6]} />
                   ))}
