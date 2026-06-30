@@ -67,6 +67,9 @@ export default function FeedbackPage() {
   const [fupDate, setFupDate] = useState('')
   const [fupTime, setFupTime] = useState('')
   const [fupEmployee, setFupEmployee] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyData, setHistoryData] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/')
@@ -149,6 +152,20 @@ export default function FeedbackPage() {
     setFupDate('')
     setFupTime('')
     setFupEmployee('')
+    setShowHistory(false)
+  }
+
+  async function openHistory(id, customer) {
+    setHistoryLoading(true)
+    setShowHistory(true)
+    try {
+      const res = await fetch(`/api/feedback/history?id=${encodeURIComponent(id)}&customer=${encodeURIComponent(customer)}`)
+      const data = await res.json()
+      setHistoryData(data.history || [])
+    } catch {
+      setHistoryData([])
+    }
+    setHistoryLoading(false)
   }
 
   async function assignIssue(id, employee) {
@@ -542,21 +559,65 @@ export default function FeedbackPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                    <button type="button" onClick={closeForm}
-                      className="px-4 py-2 rounded-xl text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>
-                    <button type="submit" disabled={saving}
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                      style={{
-                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                        color: '#fff',
-                        opacity: saving ? 0.6 : 1,
-                        boxShadow: saving ? 'none' : '0 4px 20px rgba(245,158,11,0.3)',
-                      }}>
-                      <Save size={16} /> {saving ? 'Saving...' : 'Save'}
+                  <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                    <button type="button" onClick={() => openHistory(editId, form['Customer'])}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all border"
+                      style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+                      History
                     </button>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={closeForm}
+                        className="px-4 py-2 rounded-xl text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>
+                      <button type="submit" disabled={saving}
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                        style={{
+                          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                          color: '#fff',
+                          opacity: saving ? 0.6 : 1,
+                          boxShadow: saving ? 'none' : '0 4px 20px rgba(245,158,11,0.3)',
+                        }}>
+                        <Save size={16} /> {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {showHistory && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setShowHistory(false)}>
+              <div className="w-full max-w-lg rounded-2xl border max-h-[70vh] overflow-y-auto" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }} onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                  <h2 className="text-lg font-heading font-bold" style={{ color: 'var(--text-primary)' }}>Edit History</h2>
+                  <button onClick={() => setShowHistory(false)} className="p-1.5 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
+                </div>
+                <div className="p-6">
+                  {historyLoading ? (
+                    <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Loading...</div>
+                  ) : historyData.length === 0 ? (
+                    <div className="text-center py-8 text-sm" style={{ color: 'var(--text-muted)' }}>No history found</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {historyData.map((entry, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl border" style={{ borderColor: 'var(--border-color)' }}>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', flexShrink: 0 }}>
+                            {entry.Action === 'Create Feedback' ? '+' : '~'}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{entry.User}</span>
+                              <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: entry.Action === 'Create Feedback' ? 'rgba(52,211,153,0.12)' : 'rgba(96,165,250,0.12)', color: entry.Action === 'Create Feedback' ? '#34d399' : '#60a5fa' }}>
+                                {entry.Action === 'Create Feedback' ? 'Created' : 'Updated'}
+                              </span>
+                            </div>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{entry.Timestamp}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
 
-const SHEET_ID = process.env.GOOGLE_SHEET_ID
+export const SHEET_ID = process.env.GOOGLE_SHEET_ID
 const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Sheet1'
 const EXTRA_SHEETS = (process.env.EXTRA_SHEETS || '').split(',').map(s => s.trim()).filter(Boolean)
 
@@ -13,7 +13,7 @@ const COLUMNS = [
   'Ticket', 'Duplicate', 'Note',
 ]
 
-const ACTIVITY_COLUMNS = ['Timestamp', 'User', 'Action', 'IssueId', 'IssueTicket', 'Details']
+export const ACTIVITY_COLUMNS = ['Timestamp', 'User', 'Action', 'IssueId', 'IssueTicket', 'Details']
 
 let _auth = null
 
@@ -29,7 +29,7 @@ function getAuth() {
   return _auth
 }
 
-function getSheets() {
+export function getSheets() {
   return google.sheets({ version: 'v4', auth: getAuth() })
 }
 
