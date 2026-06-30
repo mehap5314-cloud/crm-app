@@ -28,8 +28,9 @@ export default function Report() {
   }, [authStatus, router])
 
   const dayIssues = issues.filter(i => (i['Start Call'] || '').startsWith(date))
-  const newCases = dayIssues.filter(i => i._sheet !== 'old')
-  const oldCases = dayIssues.filter(i => i._sheet === 'old')
+  const isOld = i => i['2nd Call']?.trim() !== '' || Boolean(i['Closing Date']?.trim() && i['Closing Date'] !== i['Start Call'])
+  const oldCases = dayIssues.filter(isOld)
+  const newCases = dayIssues.filter(i => !isOld(i))
 
   const newClosed = newCases.filter(i => i['Status'] === 'Closed').length
   const newPending = newCases.filter(i => i['Status'] === 'Pending' || i['Status'] === 'Pending 48H').length
