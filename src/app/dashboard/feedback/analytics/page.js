@@ -76,12 +76,17 @@ export default function FeedbackAnalyticsPage() {
   const responseRate = total ? ((answered / total) * 100).toFixed(1) : '—'
 
   const empMap = {}
+  const ASSIGN_FIELDS = ['Start Call', '2nd Call', '3rd call', 'New sale']
   feedback.forEach(f => {
-    const emp = f['Employee'] || 'Unknown'
-    if (!empMap[emp]) empMap[emp] = { total: 0, ratings: [], count: 0 }
-    empMap[emp].count++
-    const r = parseInt(f['تقييم الموظف'])
-    if (r > 0) empMap[emp].ratings.push(r)
+    const assigned = ASSIGN_FIELDS.filter(k => f[k]).map(k => f[k])
+    const unique = [...new Set(assigned)]
+    if (unique.length === 0) unique.push('Unassigned')
+    unique.forEach(emp => {
+      if (!empMap[emp]) empMap[emp] = { total: 0, ratings: [], count: 0 }
+      empMap[emp].count++
+      const r = parseInt(f['تقييم الموظف'])
+      if (r > 0) empMap[emp].ratings.push(r)
+    })
   })
 
   const empPerf = Object.entries(empMap)
