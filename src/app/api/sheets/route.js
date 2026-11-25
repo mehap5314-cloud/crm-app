@@ -1,54 +1,46 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getIssuesPage, getSearchIssues, getTotalCountAll, getAllIssues, createIssue, logActivity } from '@/lib/googleSheets'
-import { getFromCache, setCache, invalidateCache } from '@/lib/cache'
+import { listIssues, createIssueData, searchByContact } from '@/lib/issuesData'
+import { ensureBootRestore } from '@/lib/sheetSync'
 import { NextResponse } from 'next/server'
 
 export async function GET(req) {
   const session = await getServerSession(getAuthOptions())
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // On free hosts the DB file can be wiped on restart — recover from the sheet once.
+  await ensureBootRestore()
+
   const { searchParams } = new URL(req.url)
-  const forceRefresh = searchParams.has('refresh')
-  const searchQuery = searchParams.get('search') || ''
-  const getAll = searchParams.has('all')
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-  const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get('pageSize') || '50')))
 
-  const cacheKey = `list-v2`
-  const cached = getFromCache(cacheKey)
-
-  if (searchQuery) {
-    const all = await getSearchIssues(searchQuery)
-    return NextResponse.json({ issues: all, total: all.length, page: 1, pageSize: all.length })
-  }
-
-  if (getAll) {
-    if (!forceRefresh && cached) {
-      return NextResponse.json({ issues: cached.data, total: cached.total })
-    }
+  // Fast duplicate lookup by contact number (used by the issue form)
+  const searchBy = searchParams.get('searchBy')
+  if (searchBy) {
     try {
-      const all = await getAllIssues()
-      setCache(cacheKey, { data: all, total: all.length })
-      return NextResponse.json({ issues: all, total: all.length })
+      const exclude = searchParams.get('excludeId')
+      return NextResponse.json({ issues: searchByContact(searchBy, exclude) })
     } catch (err) {
       return NextResponse.json({ error: err.message }, { status: 500 })
     }
   }
 
-  if (!forceRefresh && cached) {
-    const { data, total } = cached
-    const start = (page - 1) * pageSize
-    const paged = data.slice(start, start + pageSize)
-    return NextResponse.json({ issues: paged, total, page, pageSize })
-  }
-
   try {
-    const all = await getAllIssues()
-    setCache(cacheKey, { data: all, total: all.length })
-    const start = (page - 1) * pageSize
-    const paged = all.slice(start, start + pageSize)
-    return NextResponse.json({ issues: paged, total: all.length, page, pageSize })
+    const result = listIssues({
+      search: searchParams.get('search') || '',
+      status: searchParams.get('status') || '',
+      branch: searchParams.get('branch') || '',
+      destination: searchParams.get('destination') || '',
+      issueCode: searchParams.get('issueCode') || '',
+      handledBy: searchParams.get('handledBy') || '',
+      from: searchParams.get('from') || '',
+      to: searchParams.get('to') || '',
+      page: Math.max(1, parseInt(searchParams.get('page') || '1')),
+      pageSize: Math.min(500, Math.max(1, parseInt(searchParams.get('pageSize') || '50'))),
+      all: searchParams.has('all'),
+      sort: searchParams.get('sort') || 'id_desc',
+      deleted: searchParams.get('deleted') === '1',
+    })
+    return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
@@ -60,16 +52,9 @@ export async function POST(req) {
 
   try {
     const data = await req.json()
-    await createIssue(data)
-    invalidateCache()
-    logActivity({
-      Timestamp: new Date().toISOString(),
-      User: `${session.user.name || ''} (${session.user.email})`,
-      Action: 'Created issue',
-      IssueTicket: data['Ticket'] || '',
-      Details: `Customer: ${data['Customer Name'] || ''}, Branch: ${data['Branch'] || ''}`,
-    })
-    return NextResponse.json({ success: true })
+    const user = { id: session.user.id, name: session.user.name, username: session.user.username }
+    const result = createIssueData(data, user, { source: 'manual' })
+    return NextResponse.json({ success: true, ...result })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

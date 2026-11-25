@@ -1,55 +1,56 @@
-const ADMIN_EMAILS = ['mehap5314@gmail.com']
-const MANAGER_EMAILS = []
+import CredentialsProvider from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
+import { findUserByUsername } from '@/lib/db'
 
 export function getAuthOptions() {
   return {
     providers: [
-      {
-        id: 'google',
-        name: 'Google',
-        type: 'oauth',
-        wellKnown: 'https://accounts.google.com/.well-known/openid-configuration',
-        authorization: { params: { scope: 'openid email profile' } },
-        idToken: true,
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        profile(profile) {
+      CredentialsProvider({
+        id: 'credentials',
+        name: 'CRM Login',
+        credentials: {
+          username: { label: 'Username', type: 'text' },
+          password: { label: 'Password', type: 'password' },
+        },
+        async authorize(credentials) {
+          if (!credentials?.username || !credentials?.password) return null
+          const user = findUserByUsername(credentials.username)
+          if (!user || !user.active) return null
+          const valid = bcrypt.compareSync(credentials.password, user.password_hash)
+          if (!valid) return null
           return {
-            id: profile.sub,
-            name: profile.name,
-            email: profile.email,
-            image: profile.picture,
+            id: String(user.id),
+            name: user.name,
+            email: `${user.username}@crm.local`,
+            username: user.username,
+            role: user.role,
+            branch: user.branch || '',
           }
         },
-      },
+      }),
     ],
     secret: process.env.NEXTAUTH_SECRET,
-    session: { strategy: 'jwt' },
-    pages: {
-      signIn: '/',
-    },
+    session: { strategy: 'jwt', maxAge: 12 * 60 * 60 },
+    pages: { signIn: '/' },
     callbacks: {
-      async signIn({ account, profile }) {
-        if (account.provider === 'google') {
-          const allowedEmails = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim())
-          if (allowedEmails.length > 0 && allowedEmails[0] !== '') {
-            return allowedEmails.includes(profile.email)
-          }
-          return true
-        }
-        return false
-      },
-      async jwt({ token, profile }) {
-        const email = profile?.email || token?.email || ''
-        if (email) {
-          token.isAdmin = ADMIN_EMAILS.includes(email)
-          token.isManager = MANAGER_EMAILS.includes(email)
+      async jwt({ token, user }) {
+        if (user) {
+          token.uid = user.id
+          token.username = user.username
+          token.role = user.role
+          token.branch = user.branch
         }
         return token
       },
       async session({ session, token }) {
-        session.user.isAdmin = token.isAdmin || false
-        session.user.isManager = token.isManager || false
+        if (session?.user) {
+          session.user.id = token.uid || ''
+          session.user.username = token.username || ''
+          session.user.role = token.role || 'agent'
+          session.user.branch = token.branch || ''
+          session.user.isAdmin = token.role === 'admin'
+          session.user.isManager = token.role === 'manager'
+        }
         return session
       },
     },

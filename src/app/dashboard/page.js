@@ -7,12 +7,14 @@ import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
 import IssueTable from '@/components/IssueTable'
-import { RefreshCw, AlertCircle, HeadphonesIcon, Plus, Activity, CheckCircle, Clock } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
+import { RefreshCw, AlertCircle, HeadphonesIcon, Plus, Activity, CheckCircle, Clock, Download } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLang()
   const [issues, setIssues] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -88,12 +90,12 @@ export default function Dashboard() {
   }
 
   const STATS = stats ? [
-    { icon: HeadphonesIcon, label: 'Total', value: stats.total, color: '#f59e0b', sub: `${stats.pending + stats.pending48h + stats.escalated} pending`, filter: null },
-    { icon: AlertCircle, label: 'Pending', value: stats.pending, color: '#fb923c', filter: 'Pending' },
-    { icon: Clock, label: 'Pending 48H', value: stats.pending48h, color: '#fbbf24', filter: 'Pending 48H' },
-    { icon: AlertCircle, label: 'Escalated', value: stats.escalated, color: '#f87171', filter: 'Escalated' },
-    { icon: CheckCircle, label: 'Closed', value: stats.closed, color: '#34d399', filter: 'Closed' },
-    { icon: Clock, label: 'Today', value: stats.today, color: '#818cf8', filter: 'Today' },
+    { icon: HeadphonesIcon, label: t('dash.total'), value: stats.total, color: '#f59e0b', sub: `${stats.pending + stats.pending48h + stats.escalated} ${t('dash.totalPending')}`, filter: null },
+    { icon: AlertCircle, label: t('dash.pending'), value: stats.pending, color: '#fb923c', filter: 'Pending' },
+    { icon: Clock, label: t('dash.pending48h'), value: stats.pending48h, color: '#fbbf24', filter: 'Pending 48H' },
+    { icon: AlertCircle, label: t('dash.escalated'), value: stats.escalated, color: '#f87171', filter: 'Escalated' },
+    { icon: CheckCircle, label: t('dash.closed'), value: stats.closed, color: '#34d399', filter: 'Closed' },
+    { icon: Clock, label: t('dash.today'), value: stats.today, color: '#818cf8', filter: 'Today' },
   ] : []
 
   const filteredIssues = activeFilter
@@ -109,7 +111,7 @@ export default function Dashboard() {
   useKeyboardShortcuts({
     new: () => router.push('/dashboard/new'),
     search: () => {
-      const input = document.querySelector('input[placeholder="Search all fields..."]')
+      const input = document.querySelector('input[data-search]')
       if (input) input.focus()
     },
     refresh: () => handleForceRefresh(),
@@ -140,10 +142,10 @@ export default function Dashboard() {
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20">
                   <HeadphonesIcon size={20} className="text-amber-400" />
                 </div>
-                <h1 className="text-2xl font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>Customer Issues</h1>
+                <h1 className="text-2xl font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>{t('dash.title')}</h1>
               </div>
-              <p className="text-sm mr-[52px]" style={{ color: 'var(--text-secondary)' }}>
-                {activeFilter ? `Showing: ${activeFilter}` : 'All issues — click a stat card to filter'}
+              <p className="text-sm" style={{ color: 'var(--text-secondary)', marginInlineStart: '52px' }}>
+                {activeFilter ? t('dash.showing', { x: activeFilter }) : t('dash.subtitle')}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -152,8 +154,17 @@ export default function Dashboard() {
                 className="btn-accent flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
               >
                 <Plus size={16} />
-                New Issue
+                {t('dash.newIssue')}
               </Link>
+              <a
+                href="/api/export"
+                className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                style={{ color: 'var(--text-secondary)' }}
+                title={t('dash.export')}
+              >
+                <Download size={15} />
+                <span className="hidden sm:inline">{t('dash.export')}</span>
+              </a>
               <button
                 onClick={handleForceRefresh}
                 className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
@@ -162,7 +173,7 @@ export default function Dashboard() {
                 onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
               >
                 <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-                Refresh
+                {t('common.refresh')}
               </button>
             </div>
           </div>
@@ -180,14 +191,24 @@ export default function Dashboard() {
                 <button
                   key={i}
                   onClick={() => setActiveFilter(activeFilter === stat.filter ? null : stat.filter)}
-                  className="relative overflow-hidden rounded-xl border p-4 text-right transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+                  className="relative overflow-hidden rounded-xl border p-4 text-center transition-all duration-200 hover:scale-[1.02] cursor-pointer"
                   style={{
-                    background: activeFilter === stat.filter ? `${stat.color}12` : 'var(--bg-card)',
-                    borderColor: activeFilter === stat.filter ? stat.color : 'var(--border-color)',
+                    background: `linear-gradient(150deg, ${stat.color}${activeFilter === stat.filter ? '26' : '14'} 0%, ${stat.color}${activeFilter === stat.filter ? '0d' : '07'} 48%, var(--bg-card) 100%)`,
+                    borderColor: activeFilter === stat.filter ? stat.color : `${stat.color}4D`,
+                    boxShadow: activeFilter === stat.filter
+                      ? `0 0 0 1px ${stat.color}33, 0 8px 28px ${stat.color}22`
+                      : `inset 0 1px 0 ${stat.color}22, 0 4px 18px rgba(3,8,18,0.25)`,
                   }}
                 >
+                  {/* top sheen line */}
+                  <div className="absolute top-0 right-4 left-4 h-px rounded-full"
+                    style={{ background: `linear-gradient(90deg, transparent, ${stat.color}77, transparent)` }} />
+                  {/* corner glow */}
+                  <div className="absolute -top-8 -left-8 w-24 h-24 rounded-full pointer-events-none"
+                    style={{ background: `radial-gradient(circle, ${stat.color}${activeFilter === stat.filter ? '2e' : '14'}, transparent 70%)` }} />
+
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: `${stat.color}15` }}>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: `${stat.color}18`, border: `1px solid ${stat.color}33` }}>
                       <stat.icon size={15} style={{ color: stat.color }} />
                     </div>
                     <span className="text-xl font-heading font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</span>

@@ -3,10 +3,17 @@
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
+import { useLang } from '@/lib/i18n'
 import { LogOut, HeadphonesIcon, Menu } from 'lucide-react'
+
+function initials(name) {
+  return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+}
 
 export default function Navbar({ onMenuClick }) {
   const { data: session } = useSession()
+  const { t } = useLang()
 
   return (
     <nav className="sticky top-0 z-50 border-b" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-glass)', backdropFilter: 'blur(20px)' }}>
@@ -29,24 +36,23 @@ export default function Navbar({ onMenuClick }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             {session && (
               <>
                 <div className="hidden sm:flex flex-col items-end">
                   <span className="text-sm font-medium flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
                     {session.user.name}
-                    {session.user.isAdmin && <span className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wider uppercase" style={{background: 'rgba(245,158,11,0.15)', color: '#f59e0b'}}>Admin</span>}
-                    {session.user.isManager && <span className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wider uppercase" style={{background: 'rgba(99,102,241,0.15)', color: '#818cf8'}}>Manager</span>}
+                    {session.user.isAdmin && <span className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wider uppercase" style={{background: 'rgba(245,158,11,0.15)', color: '#f59e0b'}}>{t('users.roleAdmin')}</span>}
+                    {session.user.isManager && <span className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wider uppercase" style={{background: 'rgba(99,102,241,0.15)', color: '#818cf8'}}>{t('users.roleManager')}</span>}
                   </span>
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{session.user.email}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>@{session.user.username || 'user'}</span>
                 </div>
                 <div className="relative">
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name}
-                    className="w-9 h-9 rounded-xl border-2 object-cover"
-                    style={{ borderColor: 'var(--border-color)' }}
-                  />
+                  <div className="w-9 h-9 rounded-xl border-2 flex items-center justify-center text-xs font-bold"
+                    style={{ borderColor: 'var(--border-color)', background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
+                    {initials(session.user.name)}
+                  </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2" style={{ background: '#10b981', borderColor: 'var(--bg-primary)' }} />
                 </div>
                 <button
@@ -63,7 +69,7 @@ export default function Navbar({ onMenuClick }) {
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
                 >
                   <LogOut size={16} />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">{t('nav.logout')}</span>
                 </button>
               </>
             )}

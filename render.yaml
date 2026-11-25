@@ -1,0 +1,20 @@
+# Render Blueprint — free plan, no credit card required
+# Deploy: https://dashboard.render.com/blueprints -> New Blueprint Instance
+services:
+  - type: web
+    name: crm-hammer
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:cloud
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: CRM_DB_PATH
+        value: /tmp/crm.db
+      - key: SHEET_RESTORE_ON_BOOT
+        value: "1"
+      # The rest come from the .env file pasted in the dashboard (see RENDER-GUIDE.md)

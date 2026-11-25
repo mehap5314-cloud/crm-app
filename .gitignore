@@ -2,7 +2,19 @@ node_modules/
 .next/
 .env.local
 .env
+.env.render
 *.log
 
 .vercel
 .env.vercel
+
+# local database (contains password hashes + customer data)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# generated deployment archives (may embed .env.local)
+deploy/*.zip
+deploy/*.tar.gz
+render-upload/

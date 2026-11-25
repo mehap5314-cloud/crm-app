@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getActivity } from '@/lib/googleSheets'
+import { getIssueHistory } from '@/lib/history'
 import { NextResponse } from 'next/server'
 
 export async function GET(req) {
@@ -9,11 +9,12 @@ export async function GET(req) {
 
   const { searchParams } = new URL(req.url)
   const issueId = searchParams.get('issueId')
+  if (!issueId) return NextResponse.json([])
 
   try {
-    const activity = await getActivity(issueId || '')
-    return NextResponse.json(activity)
-  } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const history = getIssueHistory(issueId).reverse() // newest first
+    return NextResponse.json(history)
+  } catch {
+    return NextResponse.json([])
   }
 }

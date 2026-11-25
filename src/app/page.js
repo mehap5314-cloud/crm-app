@@ -1,17 +1,48 @@
 'use client'
 
-import { useSession, signIn } from 'next-auth/react'
-import { useEffect } from 'react'
+import { signIn } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { HeadphonesIcon } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useLang } from '@/lib/i18n'
+import LanguageToggle from '@/components/LanguageToggle'
+import { HeadphonesIcon, User, Lock, AlertCircle, Eye, EyeOff, LogIn } from 'lucide-react'
 
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLang()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => { if (session) router.push('/dashboard') }, [session, router])
 
-  if (status === 'loading') {
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const res = await signIn('credentials', { username, password, redirect: false })
+      if (res?.error) {
+        setError(t('login.error'))
+        setLoading(false)
+      } else if (res?.ok) {
+        router.push('/dashboard')
+        router.refresh()
+      } else {
+        setError(res?.error || t('login.error'))
+        setLoading(false)
+      }
+    } catch {
+      setError(t('login.connError'))
+      setLoading(false)
+    }
+  }
+
+  if (status === 'loading' || session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-grid" style={{ background: 'var(--bg-primary)' }}>
         <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
@@ -28,41 +59,88 @@ export default function Home() {
       </div>
 
       <div className="relative w-full max-w-sm mx-4">
+        <div className="absolute -top-14 left-1/2 -translate-x-1/2">
+          <LanguageToggle />
+        </div>
         <div className="glass rounded-2xl p-9 animate-fade-in">
           <div className="text-center mb-9">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 mb-5">
               <HeadphonesIcon size={28} className="text-amber-400" />
             </div>
             <h1 className="text-2xl font-heading font-bold mb-1.5 tracking-tight" style={{color: 'var(--text-primary)'}}>
-              CRM System
+              {t('login.title')}
             </h1>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Customer Issues Management
+              {t('login.subtitle')}
             </p>
           </div>
 
-          <button
-            onClick={() => signIn('google')}
-            className="w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer"
-            style={{
-              background: '#fff',
-              color: '#1a1a1a',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 30px rgba(0,0,0,0.4)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Sign in with Google
-          </button>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <User size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={t('login.username')}
+                autoComplete="username"
+                required
+                className="w-full border rounded-xl px-11 py-3.5 text-sm transition-all duration-200 focus:outline-none focus:border-amber-500/50"
+                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              />
+            </div>
+
+            <div className="relative">
+              <Lock size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t('login.password')}
+                autoComplete="current-password"
+                required
+                className="w-full border rounded-xl px-11 py-3.5 text-sm transition-all duration-200 focus:outline-none focus:border-amber-500/50"
+                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 p-0.5 rounded cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <AlertCircle size={15} className="text-red-400 shrink-0" />
+                <span className="text-xs text-red-300">{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#fff',
+                opacity: loading ? 0.6 : 1,
+                boxShadow: '0 4px 20px rgba(245,158,11,0.3)',
+              }}
+            >
+              {loading ? (
+                <span className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <LogIn size={16} />
+              )}
+              {loading ? t('login.signingIn') : t('login.signin')}
+            </button>
+          </form>
 
           <p className="text-xs text-center mt-7" style={{ color: 'var(--text-muted)' }}>
-            Only authorized employees can access this system
+            {t('login.note')}
           </p>
         </div>
       </div>

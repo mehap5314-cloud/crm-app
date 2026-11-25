@@ -1,26 +1,20 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getIssueById, updateIssue, deleteIssue, logActivity } from '@/lib/googleSheets'
-import { invalidateCache } from '@/lib/cache'
+import { getIssueData, getIssueRaw, updateIssueData, softDeleteIssue } from '@/lib/issuesData'
+import { getIssueHistory } from '@/lib/history'
 import { NextResponse } from 'next/server'
-
-const issueCache = { data: {}, expiry: {} }
-const ISSUE_TTL = 300000
 
 export async function GET(req, { params }) {
   const session = await getServerSession(getAuthOptions())
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const id = params.id
-  if (issueCache.data[id] && Date.now() < issueCache.expiry[id]) {
-    return NextResponse.json(issueCache.data[id])
-  }
-
   try {
-    const issue = await getIssueById(id)
+    const includeHistory = new URL(req.url).searchParams.has('history')
+    const issue = getIssueData(params.id)
     if (!issue) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    issueCache.data[id] = issue
-    issueCache.expiry[id] = Date.now() + ISSUE_TTL
+    if (includeHistory) {
+      return NextResponse.json({ issue, history: getIssueHistory(params.id) })
+    }
     return NextResponse.json(issue)
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
@@ -33,48 +27,30 @@ export async function PUT(req, { params }) {
 
   try {
     const data = await req.json()
-    const old = await getIssueById(params.id)
-    await updateIssue(params.id, data)
-    invalidateCache()
-    delete issueCache.data[params.id]; delete issueCache.expiry[params.id]
-    const changed = Object.keys(data).filter(k => data[k] !== (old ? old[k] : '')).join(', ')
-    logActivity({
-      Timestamp: new Date().toISOString(),
-      User: `${session.user.name || ''} (${session.user.email})`,
-      Action: 'Updated issue',
-      IssueId: params.id,
-      IssueTicket: old?.['Ticket'] || data['Ticket'] || '',
-      Details: `Changed: ${changed || 'N/A'}`,
-    })
-    return NextResponse.json({ success: true })
+    const user = { id: session.user.id, name: session.user.name, username: session.user.username }
+    const result = updateIssueData(params.id, data, user)
+    if (!result.success) return NextResponse.json({ error: result.error }, { status: result.error === 'Issue not found' ? 404 : 400 })
+    return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
 
-const ADMIN_EMAILS = ['mehap5314@gmail.com']
-
+// Only admins/managers may delete (soft delete -> trash)
 export async function DELETE(req, { params }) {
   const session = await getServerSession(getAuthOptions())
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ADMIN_EMAILS.includes(session.user.email)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const role = session.user.role
+  if (role !== 'admin' && role !== 'manager') {
+    return NextResponse.json({ error: 'Forbidden — only admin/manager can delete' }, { status: 403 })
   }
 
   try {
-    const old = await getIssueById(params.id)
-    await deleteIssue(params.id)
-    invalidateCache()
-    delete issueCache.data[params.id]; delete issueCache.expiry[params.id]
-    logActivity({
-      Timestamp: new Date().toISOString(),
-      User: `${session.user.name || ''} (${session.user.email})`,
-      Action: 'Deleted issue',
-      IssueId: params.id,
-      IssueTicket: old?.['Ticket'] || '',
-      Details: `Customer: ${old?.['Customer Name'] || 'N/A'}`,
-    })
-    return NextResponse.json({ success: true })
+    const user = { id: session.user.id, name: session.user.name, username: session.user.username }
+    const result = softDeleteIssue(params.id, user)
+    if (!result.success) return NextResponse.json({ error: result.error }, { status: 404 })
+    return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

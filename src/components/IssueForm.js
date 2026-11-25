@@ -8,6 +8,7 @@ import CustomSelect from './CustomSelect'
 import CustomDatePicker from './CustomDatePicker'
 import MultiDatePicker from './MultiDatePicker'
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
+import { useLang } from '@/lib/i18n'
 
 const BRANCHES = [
   'City 1', 'City 2', 'City 3', 'City 4', 'Elmerghany',
@@ -39,6 +40,19 @@ const ISSUE_CODES = [
   'No Code', 'Others',
 ]
 
+// قائمة أسباب الاسترجاع الجاهزة — عدّلها براحتك هنا
+const REFUND_REASONS = [
+  'عيب صناعة',
+  'غير مطابق للوصف',
+  'منتج خاطئ',
+  'مشكلة شحن أو توصيل',
+  'تغيير رأي العميل',
+  'سعر / خصم مختلف',
+  'ضمان و استبدال',
+  'مشكلة في الاسكرين',
+  'أخري',
+]
+
 const FIELDS = [
   { key: 'Start Call', label: 'Start Call', type: 'date' },
   { key: '2nd Call', label: '2nd Call', type: 'multiDate' },
@@ -57,27 +71,51 @@ const FIELDS = [
   { key: 'Exception', label: 'Exception', type: 'checkbox' },
   { key: 'Exception End Date', label: 'Exception End Date', type: 'exceptionDate' },
   { key: 'Amount Refund', label: 'Amount Refund', type: 'text' },
-  { key: 'Refund Reason', label: 'Refund Reason', type: 'refundReason' },
+  { key: 'Refund Reason', label: 'Refund Reason', type: 'select', options: REFUND_REASONS },
   { key: 'Ticket', label: 'Ticket', type: 'text' },
 
   { key: 'Follow up', label: 'Follow Up', type: 'multiDate' },
   { key: 'Note', label: 'Note', type: 'textarea' },
 ]
 
+// يربط مفتاح الحقل بمفتاح الترجمة الصحيح حسب اللغة المختارة
+const FIELD_LABEL_KEY = {
+  'Start Call': 'form.startCall',
+  '2nd Call': 'form.secondCall',
+  'Closing Date': 'form.closingDate',
+  'Branch': 'form.branch',
+  'Complaints Destination': 'form.destination',
+  'Mobile Type': 'form.mobileType',
+  'Sold By': 'form.soldBy',
+  'Customer Name': 'form.customerName',
+  'Contact Number': 'form.contact',
+  'Description': 'form.description',
+  'Final Conclusion': 'form.finalConclusion',
+  'Status': 'form.status',
+  'Handled by': 'form.handledBy',
+  'Issue code': 'form.issueCode',
+  'Exception': 'form.exception',
+  'Exception End Date': 'form.exceptionEnd',
+  'Amount Refund': 'form.amountRefund',
+  'Refund Reason': 'form.refundReason',
+  'Ticket': 'form.ticket',
+  'Follow up': 'form.followUp',
+  'Note': 'form.note',
+}
+
 export default function IssueForm({ initialData }) {
   const router = useRouter()
   const { data: session } = useSession()
+  const { t } = useLang()
   const [form, setForm] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [duplicates, setDuplicates] = useState([])
   const [exceptionEnd, setExceptionEnd] = useState('')
-  const [refundReason, setRefundReason] = useState('')
   const [fupText, setFupText] = useState('')
   const [showFup, setShowFup] = useState(false)
 
   const isEdit = !!initialData
-  const issuesCache = useRef(null)
 
   useEffect(() => {
     if (initialData) {
@@ -86,24 +124,23 @@ export default function IssueForm({ initialData }) {
       const m = note.match(/__EX_END__:(\S+)/)
       if (m) setExceptionEnd(m[1])
       else setExceptionEnd('')
+      // old records kept Refund Reason inside the Note — expose it in the dropdown
       const r = note.match(/__REF_REASON__:(.+?)(?:\s*__|$)/)
-      if (r) setRefundReason(r[1].trim())
-      else setRefundReason('')
+      if (r && !initialData['Refund Reason']) {
+        setForm((prev) => ({ ...prev, 'Refund Reason': r[1].trim() }))
+      }
     }
   }, [initialData])
 
   const checkDuplicates = useCallback(async (phone) => {
     if (!phone || phone.length < 3) { setDuplicates([]); return }
     try {
-      if (!issuesCache.current) {
-        const res = await fetch('/api/sheets?all=true')
-        if (res.ok) issuesCache.current = (await res.json()).issues
-      }
-      const matches = (issuesCache.current || []).filter(i => {
-        if (isEdit && i.id === initialData.id) return false
-        return i['Contact Number']?.includes(phone)
-      })
-      setDuplicates(matches)
+      const params = new URLSearchParams()
+      params.set('searchBy', phone)
+      if (isEdit && initialData?.id) params.set('excludeId', initialData.id)
+      const res = await fetch(`/api/sheets?${params}`)
+      if (!res.ok) return
+      setDuplicates((await res.json()).issues || [])
     } catch {}
   }, [isEdit, initialData?.id])
 
@@ -154,16 +191,6 @@ export default function IssueForm({ initialData }) {
         }
       }
 
-      if (refundReason) {
-        const note = data['Note'] || ''
-        const cleaned = note.replace(/__REF_REASON__:(.+?)(?=\s*__|$)/g, '').trim()
-        data['Note'] = `${cleaned} __REF_REASON__:${refundReason}`.trim()
-      } else {
-        if (data['Note']) {
-          data['Note'] = data['Note'].replace(/__REF_REASON__:(.+?)(?=\s*__|$)/g, '').trim()
-        }
-      }
-
       const url = isEdit ? `/api/sheets/${initialData.id}` : '/api/sheets'
       const method = isEdit ? 'PUT' : 'POST'
       const res = await fetch(url, {
@@ -200,7 +227,7 @@ export default function IssueForm({ initialData }) {
         <div className="rounded-xl mb-6 animate-slide-up overflow-hidden" style={{border: '1px solid rgba(245,158,11,0.25)'}}>
           <div className="flex items-center gap-2 px-5 py-3" style={{background: 'rgba(245,158,11,0.1)'}}>
             <AlertTriangle size={16} className="text-amber-400 shrink-0" />
-            <span className="text-sm font-medium text-amber-300">{duplicates.length} previous issue{duplicates.length > 1 ? 's' : ''} for this number</span>
+            <span className="text-sm font-medium text-amber-300">{duplicates.length} {t('form.dups')}</span>
           </div>
           <div className="divide-y" style={{borderColor: 'rgba(245,158,11,0.1)'}}>
             {duplicates.map(d => (
@@ -221,7 +248,7 @@ export default function IssueForm({ initialData }) {
                   d['Status'] === 'Escalated' ? {background: 'rgba(239,68,68,0.12)', color: '#f87171'} :
                   {}
                 }>{d['Status']}</span>
-                <span className="ml-auto text-xs opacity-50">{d['Start Call']}{d['_sheet'] === 'old' ? ' (old)' : ''}</span>
+                <span className="ml-auto text-xs opacity-50">{d['Start Call']}{d.source === 'import' ? ` (${t('form.oldTag')})` : ''}</span>
               </div>
             ))}
           </div>
@@ -229,13 +256,15 @@ export default function IssueForm({ initialData }) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {FIELDS.map((field) => (
+        {FIELDS.map((field) => {
+          const label = t(FIELD_LABEL_KEY[field.key] || field.key)
+          return (
           <div key={field.key} className={field.type === 'textarea' || field.type === 'finalConclusion' ? 'md:col-span-2 lg:col-span-3' : ''}>
-            <label className="block text-xs font-semibold tracking-wider mb-1.5" style={{color: 'var(--text-muted)'}}>
-              {field.label}
+            <label className="form-label" style={{color: 'var(--text-muted)'}}>
+              {label}
             </label>
             {field.type === 'checkbox' ? (
-              <label className="flex items-center gap-3 py-2 cursor-pointer">
+              <label className="flex items-center justify-center gap-3 py-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={(form[field.key] || '') === 'Yes'}
@@ -243,7 +272,7 @@ export default function IssueForm({ initialData }) {
                   className="w-5 h-5 rounded border-2 accent-amber-500 cursor-pointer"
                   style={{borderColor: 'var(--border-color)'}}
                 />
-                <span className="text-sm" style={{color: 'var(--text-secondary)'}}>Yes / No</span>
+                <span className="text-sm" style={{color: 'var(--text-secondary)'}}>{t('form.yesNo')}</span>
               </label>
             ) : field.type === 'textarea' ? (
               <textarea
@@ -257,7 +286,7 @@ export default function IssueForm({ initialData }) {
               <CustomDatePicker
                 value={form[field.key] || ''}
                 onChange={(v) => handleChange(field.key, v)}
-                placeholder={field.label}
+                placeholder={label}
               />
             ) : field.type === 'multiDate' ? (
               <MultiDatePicker
@@ -268,19 +297,8 @@ export default function IssueForm({ initialData }) {
               <CustomDatePicker
                 value={exceptionEnd}
                 onChange={(v) => setExceptionEnd(v)}
-                placeholder="Select end date..."
+                placeholder={t('form.selectEnd')}
               />
-            ) : field.type === 'refundReason' ? (
-              form['Amount Refund']?.trim() ? (
-                <textarea
-                  value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  rows={2}
-                  placeholder="Write refund reason..."
-                  className="w-full border rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                />
-              ) : null
             ) : field.type === 'finalConclusion' ? (
               <div className="space-y-2">
                 <textarea
@@ -308,7 +326,7 @@ export default function IssueForm({ initialData }) {
                       onChange={e => setFupText(e.target.value)}
                       className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
                       style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                      placeholder="Write follow-up..."
+                      placeholder={t('form.followPlaceholder')}
                       onKeyDown={e => {
                         if (e.key === 'Enter' && fupText.trim()) { addFupEntry(); e.preventDefault() }
                         if (e.key === 'Escape') { setShowFup(false); setFupText('') }
@@ -317,7 +335,7 @@ export default function IssueForm({ initialData }) {
                     />
                     <button type="button" onClick={addFupEntry} disabled={!fupText.trim()}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                      style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>Save</button>
+                      style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>{t('common.save')}</button>
                     <button type="button" onClick={() => { setShowFup(false); setFupText('') }}
                       className="px-2 py-1.5 rounded-lg text-xs" style={{ color: 'var(--text-muted)' }}><X size={14} /></button>
                   </div>
@@ -325,7 +343,7 @@ export default function IssueForm({ initialData }) {
                   <button type="button" onClick={() => setShowFup(true)}
                     className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-all"
                     style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
-                    <Plus size={14} /> Add entry
+                    <Plus size={14} /> {t('form.addEntry')}
                   </button>
                 )}
               </div>
@@ -334,7 +352,7 @@ export default function IssueForm({ initialData }) {
                 value={form[field.key] || ''}
                 onChange={(v) => handleChange(field.key, v)}
                 options={field.options}
-                placeholder={`Select ${field.label}...`}
+                placeholder={`${label}...`}
               />
             ) : (
               <input
@@ -351,7 +369,8 @@ export default function IssueForm({ initialData }) {
               />
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="flex items-center justify-between pt-6 mt-6 border-t" style={{borderColor: 'var(--border-color)'}}>
@@ -363,8 +382,8 @@ export default function IssueForm({ initialData }) {
           onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
           onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
         >
-          <ArrowLeft size={16} />
-          Back
+           <ArrowLeft size={16} />
+          {t('common.back')}
         </button>
         <button
           type="submit"
@@ -378,7 +397,7 @@ export default function IssueForm({ initialData }) {
           }}
         >
           <Save size={16} />
-          {loading ? 'Saving...' : isEdit ? 'Update Issue' : 'Create Issue'}
+          {loading ? t('form.saving') : isEdit ? t('form.update') : t('form.create')}
         </button>
       </div>
     </form>

@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
 import IssueForm from '@/components/IssueForm'
+import { useLang } from '@/lib/i18n'
 import { FilePlus } from 'lucide-react'
 
 export default function NewIssue() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLang()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => { if (status === 'unauthenticated') router.push('/') }, [status, router])
@@ -28,8 +30,8 @@ export default function NewIssue() {
                 <FilePlus size={22} className="text-amber-400" />
               </div>
               <div>
-                <h1 className="text-xl font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>New Issue</h1>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Record a new customer complaint</p>
+                <h1 className="text-xl font-heading font-bold tracking-tight" style={{color: 'var(--text-primary)'}}>{t('form.newIssue')}</h1>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('form.newDesc')}</p>
               </div>
             </div>
             <div className="glass rounded-2xl p-6 md:p-8 animate-slide-up">

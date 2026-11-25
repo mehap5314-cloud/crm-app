@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { getFollowups } from '@/lib/googleSheets'
+import { getFollowupsData } from '@/lib/issuesData'
 import { NextResponse } from 'next/server'
 
 export async function GET(req) {
@@ -8,8 +8,7 @@ export async function GET(req) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const issues = await getFollowups()
-    return NextResponse.json(issues)
+    return NextResponse.json(getFollowupsData())
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

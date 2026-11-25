@@ -1,17 +1,19 @@
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
-import { restoreIssue, permanentDelete } from '@/lib/googleSheets'
+import { restoreIssueData, permanentDeleteData } from '@/lib/issuesData'
 import { NextResponse } from 'next/server'
 
 export async function POST(req, { params }) {
   const session = await getServerSession(getAuthOptions())
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!session.user.isAdmin) return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   try {
-    const result = await restoreIssue(params.id)
-    if (!result.success) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    return NextResponse.json({ success: true })
+    const user = { id: session.user.id, name: session.user.name, username: session.user.username }
+    const result = restoreIssueData(params.id, user)
+    return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
@@ -20,11 +22,12 @@ export async function POST(req, { params }) {
 export async function DELETE(req, { params }) {
   const session = await getServerSession(getAuthOptions())
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!session.user.isAdmin) return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
+  }
 
   try {
-    await permanentDelete(params.id)
-    return NextResponse.json({ success: true })
+    return NextResponse.json(permanentDeleteData(params.id))
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

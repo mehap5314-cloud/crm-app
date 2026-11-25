@@ -5,6 +5,21 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Edit, Trash2, Search, ChevronDown, ChevronUp, Filter, Calendar, CheckSquare, Square, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import CustomSelect from './CustomSelect'
+import { useLang } from '@/lib/i18n'
+
+const HEADER_KEYS = {
+  'Ticket': 'table.ticket',
+  'Customer Name': 'table.customerName',
+  'Contact Number': 'table.contact',
+  'Issue code': 'table.issueCode',
+  'Days': 'table.days',
+  'Status': 'table.status',
+  'Branch': 'table.branch',
+  'Start Call': 'table.startCall',
+  'Handled by': 'table.handledBy',
+  'Amount Refund': 'table.amountRefund',
+  'Source': 'table.source',
+}
 
 function getSLADays(issue) {
   if (issue['Status'] !== 'Pending' && issue['Status'] !== 'Pending 48H') return null
@@ -56,6 +71,7 @@ const ALL_COLUMNS = ['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 
 export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page, pageSize, onPageChange, onSearch, searchQuery }) {
   const { data: session } = useSession()
   const router = useRouter()
+  const { t } = useLang()
   const [search, setSearch] = useState(searchQuery || '')
   const [statusFilter, setStatusFilter] = useState('')
   const [issueCodeFilter, setIssueCodeFilter] = useState('')
@@ -185,17 +201,18 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
           <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search all fields..."
+            data-search="1"
+            placeholder={t('table.search')}
             value={search}
             onChange={(e) => handleSearchInput(e.target.value)}
             className="w-full pr-9 pl-3 py-2 rounded-xl text-sm"
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
           />
         </div>
-        <div className="w-[130px]"><CustomSelect value={statusFilter} onChange={setStatusFilter} options={statuses} placeholder="Status" /></div>
-        <div className="w-[130px]"><CustomSelect value={issueCodeFilter} onChange={setIssueCodeFilter} options={issueCodes} placeholder="Code" /></div>
-        <div className="w-[140px]"><CustomSelect value={handledByFilter} onChange={setHandledByFilter} options={handledByList} placeholder="Handled By" /></div>
-        <div className="w-[130px]"><CustomSelect value={branchFilter} onChange={setBranchFilter} options={branchList} placeholder="Branch" /></div>
+        <div className="w-[130px]"><CustomSelect value={statusFilter} onChange={setStatusFilter} options={statuses} placeholder={t('table.status')} /></div>
+        <div className="w-[130px]"><CustomSelect value={issueCodeFilter} onChange={setIssueCodeFilter} options={issueCodes} placeholder={t('table.code')} /></div>
+        <div className="w-[140px]"><CustomSelect value={handledByFilter} onChange={setHandledByFilter} options={handledByList} placeholder={t('table.handledBy')} /></div>
+        <div className="w-[130px]"><CustomSelect value={branchFilter} onChange={setBranchFilter} options={branchList} placeholder={t('table.branch')} /></div>
         <div className="flex items-center gap-1">
           <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
           <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
@@ -210,13 +227,13 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
 
       {selected.size > 0 && (
         <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl border animate-slide-up" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{selected.size} selected</span>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('table.selected', { n: selected.size })}</span>
           <button onClick={clearSelection} className="p-1 rounded" style={{ color: 'var(--text-muted)' }}>
             <X size={14} />
           </button>
           <div className="h-5 w-px" style={{ background: 'var(--border-color)' }} />
-          <div className="w-[150px]"><CustomSelect value={bulkStatus} onChange={setBulkStatus} options={statuses} placeholder="Set Status..." /></div>
-          <div className="w-[160px]"><CustomSelect value={bulkHandledBy} onChange={setBulkHandledBy} options={handledByList} placeholder="Set Handled By..." /></div>
+          <div className="w-[150px]"><CustomSelect value={bulkStatus} onChange={setBulkStatus} options={statuses} placeholder={t('table.setStatus')} /></div>
+          <div className="w-[160px]"><CustomSelect value={bulkHandledBy} onChange={setBulkHandledBy} options={handledByList} placeholder={t('table.setHandled')} /></div>
           <button onClick={applyBulk} disabled={bulkLoading || (!bulkStatus && !bulkHandledBy)}
             className="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all"
             style={{
@@ -224,16 +241,16 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
               color: '#fff',
               opacity: bulkLoading || (!bulkStatus && !bulkHandledBy) ? 0.6 : 1,
             }}>
-            {bulkLoading ? 'Applying...' : 'Apply'}
+            {bulkLoading ? t('table.applying') : t('table.apply')}
           </button>
         </div>
       )}
 
-      <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border-color)' }}>
+      <div className="rounded-xl overflow-hidden glass" style={{ borderColor: 'var(--border-color)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: 'var(--bg-secondary)' }}>
+              <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
                 <th className="px-3 py-3.5 w-10">
                   <button onClick={toggleSelectAll} className="p-1 rounded" style={{ color: 'var(--text-muted)' }}>
                     {selected.size === filtered.length && filtered.length > 0 ? <CheckSquare size={15} /> : <Square size={15} />}
@@ -241,16 +258,16 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                 </th>
                 {['Ticket', 'Customer Name', 'Contact Number', 'Issue code', 'Days', 'Status', 'Branch', 'Start Call', 'Handled by', 'Amount Refund', 'Source'].map(col => (
                   <th key={col} onClick={() => toggleSort(col)}
-                    className="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap"
+                    className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap"
                     style={{ color: 'var(--text-muted)' }}>
-                    <div className="flex items-center gap-1">
-                      {col}
+                    <div className="flex items-center justify-center gap-1">
+                      {t(HEADER_KEYS[col]) || col}
                       <SortIcon field={col} />
                     </div>
                   </th>
                 ))}
-                <th className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
-                  Actions
+                <th className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                  {t('table.actions')}
                 </th>
               </tr>
             </thead>
@@ -260,7 +277,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                     <td colSpan={12}>
                     <div className="flex flex-col items-center justify-center py-16 gap-3" style={{ color: 'var(--text-muted)' }}>
                       <Search size={32} className="opacity-20" />
-                      <span className="text-sm">No issues found</span>
+                      <span className="text-sm">{t('table.noIssues')}</span>
                     </div>
                   </td>
                 </tr>
@@ -270,14 +287,14 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                   <tr key={issue.id}
                     className="transition-all duration-150 cursor-pointer"
                     style={{
-                      background: isSelected ? 'rgba(245,158,11,0.06)' : 'var(--bg-card)',
+                      background: isSelected ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.015)',
                       borderTop: '1px solid var(--border-color)',
                     }}
                     onMouseEnter={e => {
                       if (!isSelected) e.currentTarget.style.background = 'var(--bg-card-hover)'
                     }}
                     onMouseLeave={e => {
-                      e.currentTarget.style.background = isSelected ? 'rgba(245,158,11,0.06)' : 'var(--bg-card)'
+                      e.currentTarget.style.background = isSelected ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.015)'
                     }}
                   >
                     <td className="px-3 py-3.5 text-right" onClick={e => e.stopPropagation()}>
@@ -363,7 +380,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
                           style={{ color: 'var(--text-muted)' }}>
                           <Edit size={14} />
                         </button>
-                      {isAdmin && <button onClick={() => { if (confirm('Delete this issue?')) onDelete(issue.id) }}
+                      {isAdmin && <button onClick={() => { if (confirm(t('table.confirmDelete'))) onDelete(issue.id) }}
                         className="p-1.5 rounded-lg transition-all duration-200"
                         style={{ color: 'var(--text-muted)' }}>
                         <Trash2 size={14} />
@@ -381,9 +398,9 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
       <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
           {search ? (
-            <>Found <span className="font-medium" style={{color: 'var(--text-primary)'}}>{filtered.length}</span> results</>
+            <><span className="font-medium" style={{color: 'var(--text-primary)'}}>{filtered.length}</span> {t('table.found')}</>
           ) : (
-            <>Showing <span className="font-medium" style={{color: 'var(--text-primary)'}}>{(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)}</span> of <span className="font-medium" style={{color: 'var(--text-primary)'}}>{total}</span> issues</>
+            <>{t('table.showing', { a: (page - 1) * pageSize + 1, b: Math.min(page * pageSize, total), c: total })}</>
           )}
         </div>
         {!search && totalPages > 1 && (
@@ -394,7 +411,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
               className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
               style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
             >
-              First
+              {t('table.first')}
             </button>
             <button
               onClick={() => onPageChange(page - 1)}
@@ -441,7 +458,7 @@ export default function IssueTable({ issues, onDelete, onBulkUpdate, total, page
               className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
               style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
             >
-              Last
+              {t('table.last')}
             </button>
           </div>
         )}

@@ -1,5 +1,7 @@
 import './globals.css'
 import SessionProvider from '@/components/SessionProvider'
+import { LanguageProvider } from '@/lib/i18n'
+import { ensureBootRestore } from '@/lib/sheetSync'
 import { getServerSession } from 'next-auth'
 import { getAuthOptions } from '@/lib/auth'
 
@@ -20,6 +22,7 @@ export const viewport = {
 
 export default async function RootLayout({ children }) {
   const session = await getServerSession(getAuthOptions())
+  await ensureBootRestore()
 
   return (
     <html lang="ar" dir="rtl">
@@ -31,12 +34,17 @@ export default async function RootLayout({ children }) {
           __html: `(function(){try{var t=localStorage.getItem('crm-theme');document.documentElement.setAttribute('data-theme',t||'dark')}catch(e){}})()`
         }} />
         <script dangerouslySetInnerHTML={{
+          __html: `(function(){try{var l=localStorage.getItem('crm-lang')||'ar';document.documentElement.setAttribute('lang',l);document.documentElement.setAttribute('dir',l==='en'?'ltr':'rtl')}catch(e){}})()`
+        }} />
+        <script dangerouslySetInnerHTML={{
           __html: `if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(s){s.unregister()})});window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}`
         }} />
       </head>
       <body className="font-body">
         <SessionProvider session={session}>
-          {children}
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
         </SessionProvider>
       </body>
     </html>
