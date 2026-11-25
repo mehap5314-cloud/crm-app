@@ -1,85 +1,49 @@
 # 🚀 دليل النشر على Render (مجاني — بدون كارت ائتمان)
 
-Render بيوفر سيرفر مجاني **24/7** مع **HTTPS آمن** بدون أي بيانات دفع، والبيانات بتتحفظ تلقائياً في شيت جوجل (تاب `CRM-Live`) — لو السيرفر اتعمل restart، النظام بيرجع البيانات من الشيت لوحده.
+Render بيوفر سيرفر مجاني **24/7** مع **HTTPS آمن** بدون أي بيانات دفع.
+البيانات بتتحفظ في **شيت جوجل** (تاب `CRM-Live`) — ولو السيرفر اتعمل restart النظام بيرجّع كل الشكاوي من الشيت لوحده.
+
+> ✅ الكود مرفوع بالفعل على GitHub: `https://github.com/mehap5314-cloud/crm-app`
+> ✅ كل الإعدادات السرية موجودة في الملف **`.env.render`** (مش مرفوع على GitHub).
 
 ---
 
-## المتطلبات (مجانية كلها)
+## الخطوة 1: حساب Render (بدون كارت)
 
-- حساب **GitHub** (مجاني — بدون كارت)
-- حساب **Render** (مجاني — بدون كارت)
-- (اختياري) حساب **UptimeRobot** لإبقاء السيرفر صاحي
+1. افتح **https://render.com**
+2. **Get Started** → سجّل بحساب GitHub (أسهل وأسرع) أو بالإيميل
+3. مش مطلوب كارت ولا بيانات دفع
 
----
+## الخطوة 2: نشر التطبيق
 
-## الخطوة 1: إنشاء حساب GitHub (مرة واحدة)
+1. من لوحة Render: **New +** → **Blueprint**
+2. اربط حساب GitHub → اختار الـ repo **`mehap5314-cloud/crm-app`**
+3. Render هيقرأ ملف `render.yaml` ويجهّز الخدمة لوحده → اضغط **Apply / Create**
+4. استنى البناء (3-6 دقايق)
 
-1. افتح: **https://github.com/signup**
-2. سجّل بإيميلك (مجاني تماماً)
+> لو ظهرت رسالة إن الـ repo مش ظاهر: من GitHub → **Settings → Applications → Render** ادّي صلاحية الوصول للـ repo.
 
-## الخطوة 2: إنشاء Repository ورفع المشروع
+## الخطوة 3: المتغيّرات السرية (نسخة ولصق واحدة)
 
-1. من GitHub اضغط **New repository**
-2. الاسم: `crm-hammer`
-3. ⚠️ اختار **Private** (مهم جداً — الملفات فيها مفاتيح سرية)
-4. اضغط **Create repository**
-5. في الصفحة اللي هتفتح اضغط **uploading an existing file**
-6. افتح فولدر **`C:\Users\Hammer\Desktop\CRM\render-upload`** (اللي جهزتهولك)
-7. **حدد كل الملفات والفولدرات جواه** واسحبهم في صفحة GitHub
-8. استنى رفع الملفات → اكتب في خانة الـ commit: `CRM app` → اضغط **Commit changes**
-
-> لو ظهرت رسالة إن عدد الملفات كبير، ارفع الفولدرات الرئيسية (`src`, `public`, `deploy`) والملفات اللي جنبها على مرتين.
-
-## الخطوة 3: إنشاء حساب Render
-
-1. افتح: **https://render.com**
-2. اضغط **Get Started** → سجّل بإيميلك أو بحساب GitHub (مجاني — **مش بيطلب كارت**)
-
-## الخطوة 4: نشر التطبيق
-
-1. من لوحة Render: **New +** → **Web Service**
-2. اختار **Build and deploy from a Git repository** → **Next** → اربط حساب GitHub → اختار الـ repo `crm-hammer`
-3. املأ الإعدادات:
-
-| الإعداد | القيمة |
-|---|---|
-| **Name** | `crm-hammer` |
-| **Region** | Frankfurt (EU) |
-| **Branch** | `main` |
-| **Runtime** | Node |
-| **Build Command** | `npm ci && npm run build` |
-| **Start Command** | `npm run start:cloud` |
-| **Instance Type** | **Free** |
-| **Health Check Path** | `/api/health` |
-
-4. انزل لتحت لـ **Environment Variables** وضيف:
-
-| Key | Value |
-|---|---|
-| `NEXTAUTH_URL` | (سيبه فاضي دلوقتي — هنحطه بعد أول نشر) |
-| `CRM_DB_PATH` | `/tmp/crm.db` |
-| `SHEET_RESTORE_ON_BOOT` | `1` |
-
-> باقي الإعدادات (مفاتيح جوجل + الشيت) موجودة بالفعل في ملف `.env.local` جوه المشروع.
-
-5. اضغط **Create Web Service** واستنى البناء (3-6 دقايق)
-
-## الخطوة 5: ضبط رابط الدخول
-
-1. بعد ما يخلص البناء، هتلاقي رابط فوق زي:
+1. في Render افتح الخدمة → **Environment**
+2. اضغط **Add from .env**
+3. افتح الملف ده على جهازك:
 ```
-https://crm-hammer-xxxx.onrender.com
+C:\Users\Hammer\Desktop\CRM\CRM\crm-app\.env.render
 ```
-2. روح **Environment** → عدّل `NEXTAUTH_URL` → حط الرابط كامل (زي اللي فوق)
-3. Save → السيرفر هيعمل deploy تاني لوحده (دقيقة)
+4. **انسخ محتواه كله** والصقه في الخانة → **Save changes**
+5. Render هيعمل deploy تاني لوحده
 
-## الخطوة 6: الدخول 🎉
+## الخطوة 4: الدخول 🎉
 
-افتح الرابط → سجّل دخول:
+افتح الرابط اللي فوق في Render (شكله `https://crm-hammer-xxxx.onrender.com`):
+
 - **Username:** `admin`
 - **Password:** `admin123`
 
 ⚠️ **غيّر كلمة السر فوراً** من صفحة الموظفين.
+
+> مش محتاج تضبط `NEXTAUTH_URL` — النظام بياخد رابط Render تلقائياً.
 
 ---
 
@@ -87,25 +51,22 @@ https://crm-hammer-xxxx.onrender.com
 
 الخطة المجانية بتنام بعد **15 دقيقة** بدون زيارات (أول زيارة بعدها بتاخد ~50 ثانية). الحل المجاني:
 
-1. افتح: **https://uptimerobot.com** → سجّل مجاناً (بدون كارت)
+1. افتح **https://uptimerobot.com** → سجّل مجاناً (بدون كارت)
 2. **Add New Monitor** → نوع **HTTP(s)**
 3. الـ URL: `https://crm-hammer-xxxx.onrender.com/api/health`
-4. Interval: **كل 5 دقايق**
-5. Save
-
-كده السيرفر هيفضل صاحي طول اليوم.
+4. Interval: **كل 5 دقايق** → Save
 
 ---
 
-## أمان البيانات (مهم تفهمه)
+## أمان البيانات
 
 | الحالة | إيه اللي بيحصل |
 |---|---|
-| أي إضافة/تعديل | بتتحفظ في قاعدة البيانات **و** في شيت جوجل فوراً |
-| السيرفر عمل restart / deploy | قاعدة البيانات المؤقتة بتتمسح → **النظام بيرجع كل الشكاوي من الشيت تلقائياً** عند أول فتح |
+| أي إضافة/تعديل/حذف | بتتحفظ في قاعدة البيانات **و** في شيت جوجل فوراً |
+| السيرفر عمل restart / deploy | قاعدة البيانات المؤقتة بتتمسح → **كل الشكاوي بترجع من الشيت تلقائياً** عند أول فتح |
 | عايز نسخة إضافية | زر **"تصدير Excel"** في صفحة الشكاوي بينزّل كل البيانات `.xlsx` |
 
-> ⚠️ **ملحوظة:** شيت جوجل هو نسخة الأمان الدائمة — متمسحش تاب `CRM-Live` أبداً.
+> ⚠️ شيت جوجل هو نسخة الأمان الدائمة — متمسحش تاب `CRM-Live` أبداً.
 
 ---
 
@@ -113,14 +74,16 @@ https://crm-hammer-xxxx.onrender.com
 
 | المشكلة | الحل |
 |---|---|
-| البناء فشل (Out of memory) | في Render: Environment → ضيف `NODE_OPTIONS` = `--max-old-space-size=460` وأعد النشر |
-| الدخول بيرجع للصفحة الرئيسية | تأكد إن `NEXTAUTH_URL` مطابق للرابط بالظبط (https + بدون / في الآخر) |
-| المزامنة مش شغالة | تأكد إن الشيت متشارك مع `crm-sa@groovy-producer-499411-n1.iam.gserviceaccount.com` بصلاحية **Editor** |
-| بيانات اختفت بعد deploy | افتح الموقع مرة، استنى 10 ثواني، واعمل Refresh — الاسترجاع من الشيت بيشتغل تلقائي |
+| البناء فشل (Out of memory) | Environment → `NODE_OPTIONS` = `--max-old-space-size=460` ثم **Manual Deploy** |
+| فشل تثبيت better-sqlite3 | تأكد إن Build Command = `npm ci --ignore-scripts && npm run build` و `NODE_VERSION` = `22` |
+| الدخول بيرجع للصفحة الرئيسية | امسح الكوكيز، وتأكد إن الموقع بيفتح بـ `https` |
+| المزامنة مش شغالة | الشيت لازم يكون متشارك مع `crm-sa@groovy-producer-499411-n1.iam.gserviceaccount.com` بصلاحية **Editor** |
+| بيانات اختفت بعد deploy | افتح الموقع، استنى 10 ثواني، واعمل Refresh — الاسترجاع من الشيت بيشتغل تلقائي |
 
 ---
 
 ## أوامر مفيدة
 
 - إعادة النشر: **Manual Deploy → Deploy latest commit**
-- عرض اللوجز: **Logs** (شوف `[sheetSync] restoreFromSheet: N row(s) restored`)
+- اللوجز: **Logs** — دور على `[sheetSync] restoreFromSheet: N row(s) restored`
+- بعد أي تعديل في الكود: `git push` → Render ينشر لوحده (autoDeploy)

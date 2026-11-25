@@ -6,13 +6,17 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm ci && npm run build
+    # --ignore-scripts: better-sqlite3 v13 ships N-API prebuilds, so no native
+    # compilation is needed (npm ci would otherwise try node-gyp).
+    buildCommand: npm ci --ignore-scripts && npm run build
     startCommand: npm run start:cloud
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
-        value: 20.18.0
+        value: "22"
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=460
       - key: CRM_DB_PATH
         value: /tmp/crm.db
       - key: SHEET_RESTORE_ON_BOOT

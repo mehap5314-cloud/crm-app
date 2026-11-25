@@ -3,6 +3,12 @@ import bcrypt from 'bcryptjs'
 import { findUserByUsername } from '@/lib/db'
 
 export function getAuthOptions() {
+  // On Render the public URL is injected automatically — use it when
+  // NEXTAUTH_URL was not set manually, so login works on first deploy.
+  if (!process.env.NEXTAUTH_URL && process.env.RENDER_EXTERNAL_URL) {
+    process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL
+  }
+
   return {
     providers: [
       CredentialsProvider({
